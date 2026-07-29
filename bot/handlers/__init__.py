@@ -1,3 +1,7 @@
-from .start import router
+from aiogram import Router
 
-__all__ = ["router"]
+from .start import router as start_router
+
+router = Router()
+
+router.include_router(start_router)
