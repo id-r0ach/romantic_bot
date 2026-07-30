@@ -20,20 +20,17 @@ class UserRepository(BaseRepository[User]):
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def get_or_create(
+    async def upsert(
         self,
         telegram_id: int,
         first_name: str,
         username: Optional[str] = None,
         last_name: Optional[str] = None,
-    ) -> tuple[User, bool]:
+    ) -> User:
         """
-        Атомарно получает пользователя или создает нового через PostgreSQL ON CONFLICT.
+        Атомарный UPSERT через PostgreSQL ON CONFLICT.
+        Если пользователя нет — создает. Если есть — обновляет имя.
         """
-        # Проверяем существование до операции, чтобы знать статус (создан или обновлен)
-        existing_user = await self.get_by_tg_id(telegram_id)
-
-        # Подготавливаем атомарный SQL запрос UPSERT
         stmt = (
             pg_insert(User)
             .values(
@@ -54,6 +51,25 @@ class UserRepository(BaseRepository[User]):
         )
 
         result = await self.session.execute(stmt)
-        user = result.scalar_one()
+        return result.scalar_one()
 
-        return user, existing_user is None
+    async def update_settings(
+        self,
+        telegram_id: int,
+        timezone: Optional[str] = None,
+        notifications: Optional[bool] = None,
+    ) -> Optional[User]:
+        """
+        Обновляет только переданные настройки.
+        Изменения зафиксирует DbSessionMiddleware при коммите.
+        """
+        user = await self.get_by_tg_id(telegram_id)
+        if not user:
+            return None
+
+        if timezone is not None:
+            user.timezone = timezone
+        if notifications is not None:
+            user.notifications = notifications
+
+        return user

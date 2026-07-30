@@ -4,11 +4,12 @@ from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from database.repositories import UserRepository
+from database.repositories.user import UserRepository
+from services.user_service import UserService
 
 
 class DbSessionMiddleware(BaseMiddleware):
-    """Middleware для управления сессиями БД и проброса репозиториев в хэндлеры."""
+    """Middleware для управления сессиями БД и проброса сервисов в хэндлеры."""
 
     def __init__(self, session_pool: async_sessionmaker) -> None:
         super().__init__()
@@ -21,9 +22,16 @@ class DbSessionMiddleware(BaseMiddleware):
         data: Dict[str, Any],
     ) -> Any:
         async with self.session_pool() as session:
-            # Пробрасываем сессию и готовый репозиторий в data
+            # Создаем репозитории
+            user_repo = UserRepository(session)
+            
+            # Создаем сервисы с внедренными зависимостями
+            user_service = UserService(user_repo)
+            
+            # Пробрасываем сессию и сервисы в data
             data["session"] = session
-            data["user_repo"] = UserRepository(session)
+            data["user_repo"] = user_repo  # Оставляем для обратной совместимости
+            data["user_service"] = user_service
 
             try:
                 result = await handler(event, data)
