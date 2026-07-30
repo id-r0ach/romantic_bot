@@ -1,0 +1,59 @@
+from typing import Optional
+
+from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from database.models.user import User
+from database.repositories.base import BaseRepository
+
+
+class UserRepository(BaseRepository[User]):
+    """Репозиторий для работы с таблицей пользователей."""
+
+    def __init__(self, session: AsyncSession) -> None:
+        super().__init__(User, session)
+
+    async def get_by_tg_id(self, telegram_id: int) -> Optional[User]:
+        """Получить пользователя по Telegram ID."""
+        stmt = select(User).where(User.telegram_id == telegram_id)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def get_or_create(
+        self,
+        telegram_id: int,
+        first_name: str,
+        username: Optional[str] = None,
+        last_name: Optional[str] = None,
+    ) -> tuple[User, bool]:
+        """
+        Атомарно получает пользователя или создает нового через PostgreSQL ON CONFLICT.
+        """
+        # Проверяем существование до операции, чтобы знать статус (создан или обновлен)
+        existing_user = await self.get_by_tg_id(telegram_id)
+
+        # Подготавливаем атомарный SQL запрос UPSERT
+        stmt = (
+            pg_insert(User)
+            .values(
+                telegram_id=telegram_id,
+                username=username,
+                first_name=first_name,
+                last_name=last_name,
+            )
+            .on_conflict_do_update(
+                index_elements=[User.telegram_id],
+                set_={
+                    "username": username,
+                    "first_name": first_name,
+                    "last_name": last_name,
+                },
+            )
+            .returning(User)
+        )
+
+        result = await self.session.execute(stmt)
+        user = result.scalar_one()
+
+        return user, existing_user is None
