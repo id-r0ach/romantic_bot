@@ -5,6 +5,9 @@ from aiogram.types import Message
 from services.user_service import UserService
 from services.couple_service import CoupleService
 
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from bot.callbacks.main import NavAction
+
 router = Router()
 
 
@@ -48,4 +51,11 @@ async def cmd_profile(
     else:
         text += "\n\n💔 <b>Статус:</b> Не в паре"
 
-    await message.answer(text, parse_mode="HTML")
+    # Создаем inline-клавиатуру с кнопкой "Назад"
+    back_kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="🔙 Назад", callback_data=NavAction(action="back").pack())]
+        ]
+    )
+
+    await message.answer(text, parse_mode="HTML", reply_markup=back_kb)

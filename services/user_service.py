@@ -39,3 +39,7 @@ class UserService:
             timezone=timezone,
             notifications=notifications,
         )
+    
+    async def get_user_by_id(self, user_id: int) -> Optional[User]:
+        """Получить пользователя по внутреннему ID."""
+        return await self._user_repo.get_by_id(user_id)

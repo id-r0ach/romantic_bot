@@ -4,6 +4,7 @@ import sys
 
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.types import BotCommand
 from sqlalchemy import text
 
 from bot.handlers import router
@@ -28,6 +29,19 @@ async def check_db_connection() -> None:
         raise e
 
 
+async def set_bot_commands(bot: Bot) -> None:
+    """Устанавливает команды бота для автодополнения в поле ввода."""
+    commands = [
+        BotCommand(command="start", description="Начать работу с ботом"),
+        BotCommand(command="profile", description="Мой профиль"),
+        BotCommand(command="couple", description="Управление парой"),
+        BotCommand(command="settings", description="Настройки"),
+        BotCommand(command="leave", description="Выйти из пары"),
+        BotCommand(command="cancel", description="Отменить текущее действие"),
+    ]
+    await bot.set_my_commands(commands)
+
+
 async def main() -> None:
     # 1. Проверяем связь с базой данных
     await check_db_connection()
@@ -45,6 +59,9 @@ async def main() -> None:
     # 5. Запускаем бота
     async with Bot(token=settings.BOT_TOKEN) as bot:
         try:
+            # Устанавливаем команды меню
+            await set_bot_commands(bot)
+            
             logging.info("Запуск бота...")
             await dp.start_polling(bot)
         finally:

@@ -3,7 +3,9 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 
-from bot.keyboards.couple_kb import get_couple_main_kb, get_couple_confirm_leave_kb
+from bot.keyboards.main_kb import get_main_menu_kb
+from bot.keyboards.couple_kb import get_couple_main_kb, get_couple_in_pair_kb, get_couple_confirm_leave_kb
+from bot.callbacks.main import CoupleAction
 from bot.states.couple import CoupleStates
 from services.couple_service import CoupleService
 from services.user_service import UserService
@@ -28,6 +30,7 @@ async def cmd_couple(
         
         await message.answer(
             f"Ты уже в паре с {partner_name} ❤️",
+            reply_markup=get_couple_in_pair_kb(),
             parse_mode="HTML"
         )
         return
@@ -39,7 +42,7 @@ async def cmd_couple(
     )
 
 
-@router.callback_query(F.data == "create_couple")
+@router.callback_query(CoupleAction.filter(F.action == "create"))
 async def cb_create_couple(
     callback: CallbackQuery,
     couple_service: CoupleService,
@@ -66,7 +69,7 @@ async def cb_create_couple(
     await callback.answer()
 
 
-@router.callback_query(F.data == "join_couple")
+@router.callback_query(CoupleAction.filter(F.action == "join"))
 async def cb_join_couple(
     callback: CallbackQuery,
     state: FSMContext,
@@ -153,7 +156,11 @@ async def process_non_text_in_fsm(message: Message) -> None:
 async def cmd_cancel(message: Message, state: FSMContext) -> None:
     """Отмена текущего действия и сброс FSM"""
     await state.clear()
-    await message.answer("Действие отменено.", parse_mode="HTML")
+    await message.answer(
+        "Действие отменено.",
+        reply_markup=get_main_menu_kb(),
+        parse_mode="HTML"
+    )
 
 
 @router.message(Command("leave"))
@@ -176,8 +183,29 @@ async def cmd_leave(
     )
 
 
-@router.callback_query(F.data == "confirm_leave")
+@router.callback_query(CoupleAction.filter(F.action == "leave_confirm"))
 async def cb_confirm_leave(
+    callback: CallbackQuery,
+    couple_service: CoupleService,
+) -> None:
+    """Показывает подтверждение выхода из пары"""
+    user_id = callback.from_user.id
+    
+    couple = await couple_service.get_couple(user_id)
+    if not couple:
+        await callback.answer("Ты не в паре.", show_alert=True)
+        return
+    
+    await callback.message.edit_text(
+        "Ты уверен, что хочешь выйти из пары?",
+        reply_markup=get_couple_confirm_leave_kb(),
+        parse_mode="HTML"
+    )
+    await callback.answer()
+
+
+@router.callback_query(CoupleAction.filter(F.action == "leave_yes"))
+async def cb_leave_yes(
     callback: CallbackQuery,
     couple_service: CoupleService,
     user_service: UserService,
@@ -211,8 +239,8 @@ async def cb_confirm_leave(
         await callback.answer("Ты не в паре.", show_alert=True)
 
 
-@router.callback_query(F.data == "cancel_leave")
-async def cb_cancel_leave(callback: CallbackQuery) -> None:
+@router.callback_query(CoupleAction.filter(F.action == "leave_no"))
+async def cb_leave_no(callback: CallbackQuery) -> None:
     """Отмена выхода из пары"""
     await callback.message.edit_text("Хорошо, остаёмся вместе! ❤️", parse_mode="HTML")
     await callback.answer()

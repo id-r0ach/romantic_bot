@@ -4,6 +4,7 @@ from aiogram.types import Message, CallbackQuery
 
 from services.user_service import UserService
 from bot.keyboards.settings_kb import get_settings_keyboard
+from bot.callbacks.main import SettingsAction
 
 router = Router()
 
@@ -27,13 +28,13 @@ async def cmd_settings(message: Message, user_service: UserService) -> None:
     await message.answer(text, parse_mode="HTML", reply_markup=keyboard)
 
 
-@router.callback_query(F.data == "toggle_notifications")
+@router.callback_query(SettingsAction.filter(F.action == "toggle_notifications"))
 async def toggle_notifications(callback: CallbackQuery, user_service: UserService) -> None:
     """Переключает статус уведомлений."""
     user = await user_service.get_profile(telegram_id=callback.from_user.id)
     
     if not user:
-        await callback.answer(" Профиль не найден", show_alert=True)
+        await callback.answer("❌ Профиль не найден", show_alert=True)
         return
 
     # Переключаем статус (True -> False, False -> True)

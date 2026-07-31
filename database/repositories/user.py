@@ -19,6 +19,12 @@ class UserRepository(BaseRepository[User]):
         stmt = select(User).where(User.telegram_id == telegram_id)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
+    
+    async def get_by_id(self, user_id: int) -> Optional[User]:
+        """Получить пользователя по внутреннему ID."""
+        stmt = select(User).where(User.id == user_id)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
 
     async def upsert(
         self,

@@ -1,5 +1,7 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
+from bot.callbacks.main import SettingsAction, NavAction
+
 
 def get_settings_keyboard(notifications_enabled: bool) -> InlineKeyboardMarkup:
     """
@@ -13,7 +15,14 @@ def get_settings_keyboard(notifications_enabled: bool) -> InlineKeyboardMarkup:
         btn_text = "Уведомления: выкл ❌"
 
     keyboard = [
-        [InlineKeyboardButton(text=btn_text, callback_data="toggle_notifications")]
+        [InlineKeyboardButton(
+            text=btn_text,
+            callback_data=SettingsAction(action="toggle_notifications").pack()
+        )],
+        [InlineKeyboardButton(
+            text="🔙 Назад",
+            callback_data=NavAction(action="back").pack()
+        )]
     ]
     
     return InlineKeyboardMarkup(inline_keyboard=keyboard)

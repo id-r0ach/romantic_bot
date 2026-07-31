@@ -1,31 +1,62 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.utils.keyboard import InlineKeyboardBuilder
+
+from bot.callbacks.main import CoupleAction, NavAction
 
 
 def get_couple_main_kb() -> InlineKeyboardMarkup:
-    """Главное меню пары: создать или присоединиться"""
-    builder = InlineKeyboardBuilder()
-    builder.row(
-        InlineKeyboardButton(text="🔑 Создать", callback_data="create_couple"),
-        InlineKeyboardButton(text="🔗 Присоединиться", callback_data="join_couple"),
-    )
-    return builder.as_markup()
+    """Клавиатура для пользователя, который НЕ в паре."""
+    buttons = [
+        [
+            InlineKeyboardButton(
+                text="🔑 Создать",
+                callback_data=CoupleAction(action="create").pack()
+            ),
+            InlineKeyboardButton(
+                text="🔗 Присоединиться",
+                callback_data=CoupleAction(action="join").pack()
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="🔙 Назад",
+                callback_data=NavAction(action="back").pack()
+            )
+        ]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+def get_couple_in_pair_kb() -> InlineKeyboardMarkup:
+    """Клавиатура для пользователя, который УЖЕ в паре."""
+    buttons = [
+        [
+            InlineKeyboardButton(
+                text="💔 Выйти из пары",
+                callback_data=CoupleAction(action="leave_confirm").pack()
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="🔙 Назад",
+                callback_data=NavAction(action="back").pack()
+            )
+        ]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
 def get_couple_confirm_leave_kb() -> InlineKeyboardMarkup:
-    """Подтверждение выхода из пары"""
-    builder = InlineKeyboardBuilder()
-    builder.row(
-        InlineKeyboardButton(text="Да, выйти", callback_data="confirm_leave"),
-        InlineKeyboardButton(text="Нет, остаться", callback_data="cancel_leave"),
-    )
-    return builder.as_markup()
-
-
-def get_couple_cancel_kb() -> InlineKeyboardMarkup:
-    """Кнопка отмены FSM"""
-    builder = InlineKeyboardBuilder()
-    builder.row(
-        InlineKeyboardButton(text="Отмена", callback_data="cancel_fsm"),
-    )
-    return builder.as_markup()
+    """Клавиатура подтверждения выхода из пары."""
+    buttons = [
+        [
+            InlineKeyboardButton(
+                text="✅ Да, выйти",
+                callback_data=CoupleAction(action="leave_yes").pack()
+            ),
+            InlineKeyboardButton(
+                text="❌ Нет, остаться",
+                callback_data=CoupleAction(action="leave_no").pack()
+            )
+        ]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=buttons)

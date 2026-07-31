@@ -1,6 +1,7 @@
 from aiogram import Router
 
 from . import start
+from . import navigation
 from . import profile
 from . import settings
 from . import couple
@@ -9,6 +10,7 @@ from . import couple
 router = Router()
 
 router.include_router(start.router)
+router.include_router(navigation.router)
 router.include_router(profile.router)
 router.include_router(settings.router)
 router.include_router(couple.router)
