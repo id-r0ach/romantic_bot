@@ -30,13 +30,11 @@ async def cmd_profile(
         f"👤 <b>Твой профиль</b>\n\n"
         f"<b>Имя:</b> {user.first_name}\n"
         f"<b>Username:</b> {user.username or 'не указан'}\n"
-        f"<b>Часовой пояс:</b> {user.timezone}\n"
         f"<b>Уведомления:</b> {notifications_status}\n\n"
         f"<b>Дата регистрации:</b> {user.created_at.strftime('%d.%m.%Y')}"
     )
 
     if couple:
-        # БЕЗОПАСНО: получаем telegram_id партнёра и запрашиваем его через сервис
         partner_id = couple.user2_id if couple.user1_id == user_id else couple.user1_id
         partner = await user_service.get_profile(partner_id)
         partner_name = (partner.first_name or partner.username or "Неизвестно") if partner else "Неизвестно"
@@ -45,7 +43,7 @@ async def cmd_profile(
 
         text += (
             f"\n\n💑 <b>В паре с:</b> {partner_name}\n"
-            f"📅 <b>Вместе с:</b> {date_str}"
+            f" <b>Вместе с:</b> {date_str}"
         )
     else:
         text += "\n\n💔 <b>Статус:</b> Не в паре"

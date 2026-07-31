@@ -8,9 +8,6 @@ from bot.states.couple import CoupleStates
 from services.couple_service import CoupleService
 from services.user_service import UserService
 
-from datetime import timezone
-from zoneinfo import ZoneInfo
-
 router = Router()
 
 
@@ -46,7 +43,6 @@ async def cmd_couple(
 async def cb_create_couple(
     callback: CallbackQuery,
     couple_service: CoupleService,
-    user_service: UserService,
 ) -> None:
     """Обработка нажатия на кнопку 'Создать пару'"""
     user_id = callback.from_user.id
@@ -57,15 +53,13 @@ async def cb_create_couple(
         await callback.answer(str(e), show_alert=True)
         return
     
-    user = await user_service.get_profile(user_id)
-    user_tz = ZoneInfo(user.timezone) if user.timezone else ZoneInfo("UTC")
-    expires_local = couple.invite_expires.astimezone(user_tz)
-    expires_at = expires_local.strftime("%d.%m.%Y %H:%M")
+    # Показываем время в UTC
+    expires_at = couple.invite_expires.strftime("%d.%m.%Y %H:%M")
     
     await callback.message.answer(
         f"🔑 Твой код приглашения:\n\n"
         f"<b>{couple.invite_code}</b>\n\n"
-        f"Действует до {expires_at} (24 часа).\n"
+        f"Действует до {expires_at} (UTC, 24 часа).\n"
         f"Отправь его партнёру, чтобы он мог присоединиться.",
         parse_mode="HTML"
     )
