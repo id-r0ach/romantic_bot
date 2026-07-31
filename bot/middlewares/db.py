@@ -5,7 +5,9 @@ from aiogram.types import TelegramObject
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from database.repositories.user import UserRepository
+from database.repositories.couple import CoupleRepository
 from services.user_service import UserService
+from services.couple_service import CoupleService
 
 
 class DbSessionMiddleware(BaseMiddleware):
@@ -24,14 +26,18 @@ class DbSessionMiddleware(BaseMiddleware):
         async with self.session_pool() as session:
             # Создаем репозитории
             user_repo = UserRepository(session)
+            couple_repo = CoupleRepository(session)
             
             # Создаем сервисы с внедренными зависимостями
             user_service = UserService(user_repo)
+            couple_service = CoupleService(couple_repo)
             
             # Пробрасываем сессию и сервисы в data
             data["session"] = session
-            data["user_repo"] = user_repo  # Оставляем для обратной совместимости
+            data["user_repo"] = user_repo
             data["user_service"] = user_service
+            data["couple_repo"] = couple_repo
+            data["couple_service"] = couple_service
 
             try:
                 result = await handler(event, data)

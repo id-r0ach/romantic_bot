@@ -3,6 +3,7 @@ import logging
 import sys
 
 from aiogram import Bot, Dispatcher
+from aiogram.fsm.storage.memory import MemoryStorage
 from sqlalchemy import text
 
 from bot.handlers import router
@@ -31,14 +32,17 @@ async def main() -> None:
     # 1. Проверяем связь с базой данных
     await check_db_connection()
 
-    dp = Dispatcher()
+    # 2. Инициализируем хранилище состояний и диспетчер
+    storage = MemoryStorage()
+    dp = Dispatcher(storage=storage)
 
-    # 2. Регистрируем Middleware для всех типов апдейтов
+    # 3. Регистрируем Middleware для всех типов апдейтов
     dp.update.middleware(DbSessionMiddleware(session_pool=async_session_maker))
 
-    # 3. Подключаем роутеры
+    # 4. Подключаем роутеры
     dp.include_router(router)
 
+    # 5. Запускаем бота
     async with Bot(token=settings.BOT_TOKEN) as bot:
         try:
             logging.info("Запуск бота...")
