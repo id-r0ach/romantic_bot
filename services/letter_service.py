@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from aiogram import Bot
 from aiogram.exceptions import TelegramBadRequest
 
+from bot.utils.timezone_utils import to_local
 from database.models.letter import Letter
 from database.repositories.letter import LetterRepository
 from database.repositories.user import UserRepository
@@ -47,39 +48,47 @@ class LetterService:
 
     async def deliver_letter(self, letter: Letter) -> None:
         """Отправляет письмо, обновляет БД и уведомляет отправителя."""
-        # ИСПРАВЛЕНО 1: используем get_by_tg_id, так как sender_id — это telegram_id
         sender = await self._user_repo.get_by_tg_id(letter.sender_id)
         receiver = await self._user_repo.get_by_tg_id(letter.receiver_id)
         
-        # ИСПРАВЛЕНО 2: в модели User поля first_name и username, а не name
         sender_name = (sender.first_name or sender.username or "Твой партнер") if sender else "Твой партнер"
         receiver_name = (receiver.first_name or receiver.username or "партнер") if receiver else "партнер"
 
-        # 1. Отправляем письмо получателю
+        # Часовые пояса для конвертации дат
+        receiver_tz = receiver.timezone if receiver else "UTC"
+        sender_tz = sender.timezone if sender else "UTC"
+
+        # 1. Отправляем письмо получателю (даты в его локальном времени)
         try:
+            created_local = to_local(letter.created_at, receiver_tz)
+            opened_local = to_local(letter.open_date, receiver_tz)
+            
             await self._bot.send_message(
                 chat_id=letter.receiver_id,
                 text=(
                     f"💌 <b>Письмо из капсулы времени!</b>\n\n"
                     f"От: {sender_name}\n"
-                    f"Дата написания: {letter.created_at.strftime('%d.%m.%Y')}\n"
-                    f"Дата открытия: {letter.open_date.strftime('%d.%m.%Y в %H:%M')}\n\n"
+                    f"Дата написания: {created_local.strftime('%d.%m.%Y')}\n"
+                    f"Дата открытия: {opened_local.strftime('%d.%m.%Y в %H:%M')}\n\n"
                     f"✨ <i>{letter.text}</i>"
                 ),
                 parse_mode="HTML"
             )
         except TelegramBadRequest as e:
-            # Если пользователь заблокировал бота или удалил аккаунт
             logger.warning(f"Не удалось доставить письмо {letter.id} пользователю {letter.receiver_id}: {e}")
 
-        # 2. Помечаем как доставленное в БД (используем timezone-aware время)
+        # 2. Помечаем как доставленное в БД
         await self._letter_repo.mark_delivered(letter.id, datetime.now(timezone.utc))
 
-        # 3. Уведомляем отправителя, что письмо отправлено
+        # 3. Уведомляем отправителя (дата доставки в его локальном времени)
         try:
+            delivered_local = to_local(datetime.now(timezone.utc), sender_tz)
             await self._bot.send_message(
                 chat_id=letter.sender_id,
-                text=f"💌 Твоё письмо для {receiver_name} было отправлено!"  # <-- ИЗМЕНЕНО ЗДЕСЬ
+                text=(
+                    f"💌 Твоё письмо для {receiver_name} было доставлено!\n"
+                    f"📅 {delivered_local.strftime('%d.%m.%Y в %H:%M')}"
+                )
             )
         except TelegramBadRequest as e:
             logger.warning(f"Не удалось уведомить отправителя {letter.sender_id} о письме {letter.id}: {e}")

@@ -2,6 +2,7 @@ from typing import Optional
 
 from database.models.user import User
 from database.repositories.user import UserRepository
+from bot.utils.timezone_utils import validate_timezone
 
 
 class UserService:
@@ -34,6 +35,10 @@ class UserService:
         notifications: Optional[bool] = None,
     ) -> Optional[User]:
         """Обновляет настройки пользователя. Изменяет только переданные не-None значения."""
+        # Валидация часового пояса перед сохранением
+        if timezone is not None and not validate_timezone(timezone):
+            raise ValueError(f"Невалидный часовой пояс: {timezone}")
+            
         return await self._user_repo.update_settings(
             telegram_id=telegram_id,
             timezone=timezone,

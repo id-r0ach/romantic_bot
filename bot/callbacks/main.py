@@ -14,7 +14,8 @@ class CoupleAction(CallbackData, prefix="couple"):
 
 class SettingsAction(CallbackData, prefix="settings"):
     """Действия внутри экрана 'Настройки'."""
-    action: Literal["toggle_notifications"]
+    action: Literal["toggle_notifications", "set_timezone", "select_timezone", "other_timezone"]
+    timezone: str | None = None
 
 
 class LetterAction(CallbackData, prefix="letter"):

@@ -8,8 +8,10 @@ from aiogram.fsm.context import FSMContext
 from bot.callbacks.main import LetterAction
 from bot.keyboards.letter_kb import get_letter_date_keyboard, get_letter_confirm_keyboard
 from bot.states.letter import LetterStates
+from bot.utils.timezone_utils import to_utc, to_local
 from services.couple_service import CoupleService
 from services.letter_service import LetterService
+from services.user_service import UserService
 
 router = Router()
 
@@ -18,10 +20,15 @@ router = Router()
 async def cb_select_date(
     callback: CallbackQuery,
     state: FSMContext,
+    user_service: UserService,
 ) -> None:
     """Обработка выбора даты открытия письма"""
     callback_data = LetterAction.unpack(callback.data)
     days = callback_data.days
+    
+    # Получаем часовой пояс пользователя
+    user = await user_service.get_profile(telegram_id=callback.from_user.id)
+    user_tz = user.timezone if user else "UTC"
     
     # Если выбрана "Своя дата"
     if days is None:
@@ -34,15 +41,20 @@ async def cb_select_date(
         await callback.answer()
         return
     
-    # Рассчитываем дату для пресетов
-    open_date = datetime.now(timezone.utc) + timedelta(days=days)
-    await state.update_data(open_date=open_date.isoformat())
+    # Рассчитываем дату в локальном времени пользователя
+    now_local = to_local(datetime.now(timezone.utc), user_tz)
+    open_date_local = now_local + timedelta(days=days)
+    
+    # Конвертируем в UTC для сохранения
+    open_date_utc = to_utc(open_date_local, user_tz)
+    
+    await state.update_data(open_date=open_date_utc.isoformat())
     
     # Переходим сразу к вводу текста
     await state.set_state(LetterStates.entering_text)
     await callback.message.edit_text(
         f"📅 Письмо будет открыто через {days} дней "
-        f"({open_date.strftime('%d.%m.%Y в %H:%M')} UTC)\n\n"
+        f"({open_date_local.strftime('%d.%m.%Y в %H:%M')})\n\n"
         "Теперь напиши текст письма:",
         parse_mode="HTML"
     )
@@ -59,7 +71,7 @@ async def process_entering_date(message: Message, state: FSMContext) -> None:
         await state.set_state(LetterStates.entering_time)
         await message.answer(
             "⏰ Теперь введи <b>время</b> в формате <b>ЧЧ:ММ</b>\n\n"
-            "<i>Формат 24 часа, часовой пояс UTC.</i>\n"
+            "<i>Формат 24 часа.</i>\n"
             "Например: 12:00",
             parse_mode="HTML"
         )
@@ -73,27 +85,41 @@ async def process_non_text_date(message: Message) -> None:
 
 
 @router.message(LetterStates.entering_time, F.text.regexp(r"^\d{2}:\d{2}$"))
-async def process_entering_time(message: Message, state: FSMContext) -> None:
+async def process_entering_time(
+    message: Message, 
+    state: FSMContext,
+    user_service: UserService,
+) -> None:
     """Обработка ввода времени и финальная проверка на прошлое"""
     data = await state.get_data()
     date_str = data.get("date_str")
     time_str = message.text.strip()
     
+    # Получаем часовой пояс пользователя
+    user = await user_service.get_profile(telegram_id=message.from_user.id)
+    user_tz = user.timezone if user else "UTC"
+    
     try:
-        # Объединяем дату и время
+        # Объединяем дату и время (считаем их локальным временем пользователя)
         dt_str = f"{date_str} {time_str}"
         date_obj = datetime.strptime(dt_str, "%d.%m.%Y %H:%M")
-        open_date = date_obj.replace(tzinfo=timezone.utc)
         
-        # Проверка на прошлое (позволяет отправить на сегодня, но через 5 минут)
-        if open_date <= datetime.now(timezone.utc):
+        # Конвертируем в UTC
+        open_date_utc = to_utc(date_obj, user_tz)
+        
+        # Проверка на прошлое
+        if open_date_utc <= datetime.now(timezone.utc):
             await message.answer("⏳ Дата и время должны быть в будущем. Попробуй указать время позже.")
             return
         
-        await state.update_data(open_date=open_date.isoformat())
+        await state.update_data(open_date=open_date_utc.isoformat())
         await state.set_state(LetterStates.entering_text)
+        
+        # Для отображения используем локальное время
+        open_date_local = to_local(open_date_utc, user_tz)
+        
         await message.answer(
-            f"📅 Письмо будет открыто <b>{open_date.strftime('%d.%m.%Y в %H:%M')} (UTC)</b>\n\n"
+            f"📅 Письмо будет открыто <b>{open_date_local.strftime('%d.%m.%Y в %H:%M')}</b>\n\n"
             "Теперь напиши текст письма:",
             parse_mode="HTML"
         )
@@ -110,6 +136,7 @@ async def process_non_text_time(message: Message) -> None:
 async def process_letter_text(
     message: Message,
     state: FSMContext,
+    user_service: UserService,
 ) -> None:
     """Обработка ввода текста письма"""
     text = message.text.strip()
@@ -133,11 +160,16 @@ async def process_letter_text(
         await state.set_state(LetterStates.choosing_date)
         return
     
-    open_date = datetime.fromisoformat(open_date_str)
+    open_date_utc = datetime.fromisoformat(open_date_str)
+    
+    # Получаем часовой пояс пользователя для отображения
+    user = await user_service.get_profile(telegram_id=message.from_user.id)
+    user_tz = user.timezone if user else "UTC"
+    open_date_local = to_local(open_date_utc, user_tz)
     
     await message.answer(
         f"💌 <b>Подтверждение</b>\n\n"
-        f"Дата и время открытия: <b>{open_date.strftime('%d.%m.%Y в %H:%M')} (UTC)</b>\n"
+        f"Дата и время открытия: <b>{open_date_local.strftime('%d.%m.%Y в %H:%M')}</b>\n"
         f"Текст письма:\n\n"
         f"<i>{text}</i>\n\n"
         f"Письмо будет доставлено в указанное время. Изменить нельзя.",
@@ -157,6 +189,7 @@ async def cb_confirm_letter(
     state: FSMContext,
     couple_service: CoupleService,
     letter_service: LetterService,
+    user_service: UserService,
 ) -> None:
     """Подтверждение и создание письма"""
     user_id = callback.from_user.id
@@ -169,7 +202,7 @@ async def cb_confirm_letter(
         await state.clear()
         return
     
-    open_date = datetime.fromisoformat(open_date_str)
+    open_date_utc = datetime.fromisoformat(open_date_str)
     
     couple = await couple_service.get_couple(user_id)
     if not couple:
@@ -184,14 +217,19 @@ async def cb_confirm_letter(
         sender_id=user_id,
         receiver_id=receiver_id,
         text=text,
-        open_date=open_date
+        open_date=open_date_utc
     )
     
     await state.clear()
     
+    # Получаем часовой пояс пользователя для отображения
+    user = await user_service.get_profile(telegram_id=user_id)
+    user_tz = user.timezone if user else "UTC"
+    open_date_local = to_local(open_date_utc, user_tz)
+    
     await callback.message.edit_text(
         "💌 Письмо запечатано!\n\n"
-        f"Оно будет доставлено {open_date.strftime('%d.%m.%Y в %H:%M')} (UTC).",
+        f"Оно будет доставлено {open_date_local.strftime('%d.%m.%Y в %H:%M')}.",
         parse_mode="HTML"
     )
     await callback.answer()
@@ -217,6 +255,7 @@ async def cmd_show_letters(
     message: Message,
     letter_service: LetterService,
     couple_service: CoupleService,
+    user_service: UserService,
 ) -> None:
     """Показывает все активные (ожидающие доставки) письма пользователя"""
     user_id = message.from_user.id
@@ -225,6 +264,10 @@ async def cmd_show_letters(
     if not couple:
         await message.answer("Ты не в паре. Сначала создай пару 💑", parse_mode="HTML")
         return
+    
+    # Получаем часовой пояс пользователя
+    user = await user_service.get_profile(telegram_id=user_id)
+    user_tz = user.timezone if user else "UTC"
     
     letters = await letter_service.get_active_letters(user_id)
     
@@ -238,8 +281,10 @@ async def cmd_show_letters(
     
     lines = ["💌 <b>Твои активные письма:</b>\n"]
     for i, letter in enumerate(letters, 1):
+        # Конвертируем UTC из БД в локальное время пользователя
+        open_date_local = to_local(letter.open_date, user_tz)
         lines.append(
-            f"{i}. 📅 {letter.open_date.strftime('%d.%m.%Y в %H:%M')} (UTC)\n"
+            f"{i}. 📅 {open_date_local.strftime('%d.%m.%Y в %H:%M')}\n"
             f"   <i>{letter.text[:50]}{'...' if len(letter.text) > 50 else ''}</i>"
         )
     
