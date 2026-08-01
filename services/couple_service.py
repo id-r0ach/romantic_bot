@@ -3,14 +3,24 @@ import string
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.exc import IntegrityError
+from aiogram import Bot
+from aiogram.exceptions import TelegramBadRequest
 
 from database.repositories.couple import CoupleRepository
 from database.models.couple import Couple
+from services.letter_service import LetterService
 
 
 class CoupleService:
-    def __init__(self, couple_repo: CoupleRepository):
+    def __init__(
+        self, 
+        couple_repo: CoupleRepository,
+        letter_service: LetterService,
+        bot: Bot
+    ):
         self.couple_repo = couple_repo
+        self.letter_service = letter_service
+        self.bot = bot
 
     @staticmethod
     def _generate_invite_code() -> str:
@@ -21,12 +31,10 @@ class CoupleService:
 
     async def create_couple(self, user_id: int) -> Couple:
         """Создать новую пару и вернуть её с кодом"""
-        # Проверяем, нет ли уже активной пары
         existing = await self.couple_repo.get_by_user_id(user_id)
         if existing:
             raise ValueError("Ты уже в паре")
 
-        # Проверяем, нет ли pending пары (чтобы не создавать дубли)
         pending = await self.couple_repo.get_pending_by_user_id(user_id)
         if pending:
             return pending
@@ -42,30 +50,24 @@ class CoupleService:
             )
             return couple
         except IntegrityError:
-            # Редкий случай: код уже существует (почти невозможно)
             raise ValueError("Не удалось создать код. Попробуй ещё раз")
 
     async def join_couple(self, user_id: int, invite_code: str) -> Couple:
         """Присоединиться к паре по коду"""
-        # Проверяем, не в паре ли уже пользователь
         existing = await self.couple_repo.get_by_user_id(user_id)
         if existing:
             raise ValueError("Ты уже в паре")
 
-        # Ищем пару по коду
         couple = await self.couple_repo.get_by_invite_code(invite_code)
         if not couple:
             raise ValueError("Код не найден")
 
-        # Проверяем срок действия
         if couple.invite_expires < datetime.now(timezone.utc):
             raise ValueError("Код истёк")
 
-        # Проверяем, не свой ли это код
         if couple.user1_id == user_id:
             raise ValueError("Нельзя присоединиться к самому себе")
 
-        # Активируем пару
         activated = await self.couple_repo.activate_couple(couple.id, user_id)
         return activated
 
@@ -79,4 +81,19 @@ class CoupleService:
         if not couple:
             raise ValueError("Ты не в паре")
 
+        # 1. Разрываем пару
         await self.couple_repo.break_couple(couple.id)
+        
+        # 2. Отменяем все активные письма (ВАЖНО!)
+        await self.letter_service.cancel_pending_letters(couple.id)
+        
+        # 3. Уведомляем партнера
+        partner_id = couple.user2_id if couple.user1_id == user_id else couple.user1_id
+        if partner_id:
+            try:
+                await self.bot.send_message(
+                    chat_id=partner_id,
+                    text="💔 Твой партнер решил завершить отношения. Пара распалась."
+                )
+            except TelegramBadRequest:
+                pass  # Партнер мог заблокировать бота

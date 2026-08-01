@@ -6,8 +6,10 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from database.repositories.user import UserRepository
 from database.repositories.couple import CoupleRepository
+from database.repositories.letter import LetterRepository
 from services.user_service import UserService
 from services.couple_service import CoupleService
+from services.letter_service import LetterService
 
 
 class DbSessionMiddleware(BaseMiddleware):
@@ -17,7 +19,7 @@ class DbSessionMiddleware(BaseMiddleware):
         super().__init__()
         self.session_pool = session_pool
 
-    async def __call__(
+    async def __call__(  # <-- ПРОВЕРЬ: здесь ровно по два подчеркивания с каждой стороны
         self,
         handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
         event: TelegramObject,
@@ -27,10 +29,15 @@ class DbSessionMiddleware(BaseMiddleware):
             # Создаем репозитории
             user_repo = UserRepository(session)
             couple_repo = CoupleRepository(session)
+            letter_repo = LetterRepository(session)
+            
+            # Получаем bot из data (aiogram добавляет его автоматически)
+            bot = data["bot"]
             
             # Создаем сервисы с внедренными зависимостями
             user_service = UserService(user_repo)
-            couple_service = CoupleService(couple_repo)
+            letter_service = LetterService(letter_repo, user_repo, bot)
+            couple_service = CoupleService(couple_repo, letter_service, bot)
             
             # Пробрасываем сессию и сервисы в data
             data["session"] = session
@@ -38,6 +45,7 @@ class DbSessionMiddleware(BaseMiddleware):
             data["user_service"] = user_service
             data["couple_repo"] = couple_repo
             data["couple_service"] = couple_service
+            data["letter_service"] = letter_service
 
             try:
                 result = await handler(event, data)

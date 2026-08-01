@@ -10,6 +10,11 @@ from bot.states.couple import CoupleStates
 from services.couple_service import CoupleService
 from services.user_service import UserService
 
+from bot.callbacks.main import LetterAction
+from bot.states.letter import LetterStates
+from bot.keyboards.letter_kb import get_letter_date_keyboard
+
+
 router = Router()
 
 
@@ -243,4 +248,32 @@ async def cb_leave_yes(
 async def cb_leave_no(callback: CallbackQuery) -> None:
     """Отмена выхода из пары"""
     await callback.message.edit_text("Хорошо, остаёмся вместе! ❤️", parse_mode="HTML")
+    await callback.answer()
+
+
+@router.callback_query(LetterAction.filter(F.action == "create"))
+async def cb_create_letter(
+    callback: CallbackQuery,
+    state: FSMContext,
+    couple_service: CoupleService,
+) -> None:
+    """Начало создания письма — выбор даты"""
+    user_id = callback.from_user.id
+    
+    # Проверяем, что пользователь в паре
+    couple = await couple_service.get_couple(user_id)
+    if not couple:
+        await callback.answer("Сначала создай пару 💑", show_alert=True)
+        return
+    
+    # Переводим в состояние выбора даты
+    await state.set_state(LetterStates.choosing_date)
+    await state.update_data(couple_id=couple.id)  # Сохраняем couple_id в FSM
+    
+    await callback.message.edit_text(
+        "💌 <b>Капсула времени</b>\n\n"
+        "Выбери, когда твоё письмо будет открыто:",
+        reply_markup=get_letter_date_keyboard(),
+        parse_mode="HTML"
+    )
     await callback.answer()

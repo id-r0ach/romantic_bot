@@ -1,6 +1,6 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-from bot.callbacks.main import CoupleAction, NavAction
+from bot.callbacks.main import CoupleAction, NavAction, LetterAction
 
 
 def get_couple_main_kb() -> InlineKeyboardMarkup:
@@ -29,6 +29,12 @@ def get_couple_main_kb() -> InlineKeyboardMarkup:
 def get_couple_in_pair_kb() -> InlineKeyboardMarkup:
     """Клавиатура для пользователя, который УЖЕ в паре."""
     buttons = [
+        [
+            InlineKeyboardButton(
+                text="💌 Капсула времени",
+                callback_data=LetterAction(action="create").pack()  # <-- НОВАЯ КНОПКА
+            )
+        ],
         [
             InlineKeyboardButton(
                 text="💔 Выйти из пары",

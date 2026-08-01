@@ -15,3 +15,9 @@ class CoupleAction(CallbackData, prefix="couple"):
 class SettingsAction(CallbackData, prefix="settings"):
     """Действия внутри экрана 'Настройки'."""
     action: Literal["toggle_notifications"]
+
+
+class LetterAction(CallbackData, prefix="letter"):
+    """Действия с капсулой времени."""
+    action: Literal["create", "select_date", "confirm", "cancel"]
+    days: int | None = None  # 7, 30, 365 или None для "Своя дата"
