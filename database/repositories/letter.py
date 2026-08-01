@@ -18,10 +18,18 @@ class LetterRepository(BaseRepository[Letter]):
         return letter
 
     async def get_pending(self, now: datetime) -> list[Letter]:
-        """Находит все письма, которые пора доставить."""
-        query = select(Letter).where(
-            Letter.status == "pending",
-            Letter.open_date <= now
+        """Находит все письма, которые пора доставить.
+        
+        Использует FOR UPDATE SKIP LOCKED для предотвращения гонки:
+        если два воркера запустятся одновременно, каждый получит свой набор писем.
+        """
+        query = (
+            select(Letter)
+            .where(
+                Letter.status == "pending",
+                Letter.open_date <= now
+            )
+            .with_for_update(skip_locked=True)  # Блокируем строки, другие транзакции их пропустят
         )
         result = await self.session.execute(query)
         return list(result.scalars().all())

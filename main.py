@@ -4,7 +4,7 @@ import sys
 from datetime import datetime, timezone
 
 from aiogram import Bot, Dispatcher
-from aiogram.fsm.storage.redis import RedisStorage  # <-- ИЗМЕНЕНО: импорт RedisStorage
+from aiogram.fsm.storage.redis import RedisStorage
 from aiogram.types import BotCommand
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy import text
@@ -56,22 +56,29 @@ async def check_pending_letters(bot: Bot) -> None:
         letter_service = LetterService(letter_repo, user_repo, bot)
         
         now = datetime.now(timezone.utc)
-        pending_letters = await letter_service.get_pending_letters(now)
         
-        for letter in pending_letters:
-            try:
-                await letter_service.deliver_letter(letter)
-                await session.commit()
-                logging.info(f"Письмо {letter.id} успешно доставлено.")
-            except Exception as e:
-                await session.rollback()
-                logging.error(f"Ошибка при доставке письма {letter.id}: {e}")
+        # <-- ИЗМЕНЕНО: Оборачиваем в транзакцию для защиты от гонки
+        async with session.begin():
+            # get_pending теперь использует FOR UPDATE SKIP LOCKED
+            pending_letters = await letter_repo.get_pending(now)
+            
+            for letter in pending_letters:
+                # <-- ИЗМЕНЕНО: Идемпотентность (дополнительная защита)
+                if letter.status != "pending":
+                    continue
+                
+                try:
+                    await letter_service.deliver_letter(letter)
+                    logging.info(f"Письмо {letter.id} успешно доставлено.")
+                except Exception as e:
+                    logging.error(f"Ошибка при доставке письма {letter.id}: {e}")
+                    # Пробрасываем исключение, чтобы session.begin() автоматически сделал rollback
+                    raise
 
 
 async def main() -> None:
     await check_db_connection()
 
-    # <-- ИЗМЕНЕНО: Инициализация RedisStorage через URL из настроек
     storage = RedisStorage.from_url(settings.redis_url)
     
     dp = Dispatcher(storage=storage)
