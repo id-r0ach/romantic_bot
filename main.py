@@ -4,7 +4,7 @@ import sys
 from datetime import datetime, timezone
 
 from aiogram import Bot, Dispatcher
-from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.fsm.storage.redis import RedisStorage  # <-- ИЗМЕНЕНО: импорт RedisStorage
 from aiogram.types import BotCommand
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy import text
@@ -61,20 +61,19 @@ async def check_pending_letters(bot: Bot) -> None:
         for letter in pending_letters:
             try:
                 await letter_service.deliver_letter(letter)
-                # ИСПРАВЛЕНИЕ: явно коммитим изменения после каждого письма
                 await session.commit()
                 logging.info(f"Письмо {letter.id} успешно доставлено.")
             except Exception as e:
-                # Если что-то пошло не так, откатываем транзакцию для этого письма
                 await session.rollback()
                 logging.error(f"Ошибка при доставке письма {letter.id}: {e}")
-                # Не прерываем цикл, чтобы попытаться доставить остальные письма
 
 
 async def main() -> None:
     await check_db_connection()
 
-    storage = MemoryStorage()
+    # <-- ИЗМЕНЕНО: Инициализация RedisStorage через URL из настроек
+    storage = RedisStorage.from_url(settings.redis_url)
+    
     dp = Dispatcher(storage=storage)
     dp.update.middleware(DbSessionMiddleware(session_pool=async_session_maker))
     dp.include_router(router)
@@ -83,7 +82,6 @@ async def main() -> None:
     scheduler = AsyncIOScheduler(timezone="UTC")
     
     async with Bot(token=settings.BOT_TOKEN) as bot:
-        # Передаем bot в задачу через kwargs
         scheduler.add_job(
             check_pending_letters, 
             "interval", 
