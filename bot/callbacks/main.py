@@ -4,7 +4,7 @@ from typing import Literal
 
 class NavAction(CallbackData, prefix="nav"):
     """Навигация по главному меню и общим экранам."""
-    action: Literal["back"]
+    action: Literal["back", "cancel_fsm"]
 
 
 class CoupleAction(CallbackData, prefix="couple"):

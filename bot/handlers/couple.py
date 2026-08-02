@@ -5,15 +5,13 @@ from aiogram.fsm.context import FSMContext
 
 from bot.keyboards.main_kb import get_main_menu_kb
 from bot.keyboards.couple_kb import get_couple_main_kb, get_couple_in_pair_kb, get_couple_confirm_leave_kb
-from bot.callbacks.main import CoupleAction
+from bot.keyboards.common_kb import get_cancel_fsm_kb
+from bot.callbacks.main import CoupleAction, NavAction, LetterAction
 from bot.states.couple import CoupleStates
-from services.couple_service import CoupleService
-from services.user_service import UserService
-
-from bot.callbacks.main import LetterAction
 from bot.states.letter import LetterStates
 from bot.keyboards.letter_kb import get_letter_date_keyboard
-
+from services.couple_service import CoupleService
+from services.user_service import UserService
 
 router = Router()
 
@@ -24,7 +22,6 @@ async def cmd_couple(
     user_service: UserService,
     couple_service: CoupleService,
 ) -> None:
-    """Обработка команды /couple"""
     user_id = message.from_user.id
     couple = await couple_service.get_couple(user_id)
     
@@ -52,7 +49,6 @@ async def cb_create_couple(
     callback: CallbackQuery,
     couple_service: CoupleService,
 ) -> None:
-    """Обработка нажатия на кнопку 'Создать пару'"""
     user_id = callback.from_user.id
     
     try:
@@ -61,7 +57,6 @@ async def cb_create_couple(
         await callback.answer(str(e), show_alert=True)
         return
     
-    # Показываем время в UTC
     expires_at = couple.invite_expires.strftime("%d.%m.%Y %H:%M")
     
     await callback.message.answer(
@@ -80,7 +75,6 @@ async def cb_join_couple(
     state: FSMContext,
     couple_service: CoupleService,
 ) -> None:
-    """Обработка нажатия на кнопку 'Присоединиться'"""
     user_id = callback.from_user.id
     
     existing = await couple_service.get_couple(user_id)
@@ -90,7 +84,8 @@ async def cb_join_couple(
 
     await state.set_state(CoupleStates.waiting_for_code)
     await callback.message.answer(
-        "Введи код приглашения (или нажми /cancel):",
+        "Введи код приглашения:",
+        reply_markup=get_cancel_fsm_kb(),  # <-- ДОБАВЛЕНО
         parse_mode="HTML"
     )
     await callback.answer()
@@ -98,7 +93,6 @@ async def cb_join_couple(
 
 @router.message(CoupleStates.waiting_for_code, Command("couple"))
 async def cmd_couple_in_fsm(message: Message, state: FSMContext) -> None:
-    """Если пользователь написал /couple во время ввода кода, сбрасываем FSM"""
     await state.clear()
     await message.answer(
         "Действие отменено. Теперь ты можешь создать пару или присоединиться к другой.",
@@ -113,7 +107,6 @@ async def process_join_code(
     couple_service: CoupleService,
     user_service: UserService,
 ) -> None:
-    """Обработка введённого кода"""
     if message.text.startswith('/'):
         return
     
@@ -150,16 +143,15 @@ async def process_join_code(
 
 @router.message(CoupleStates.waiting_for_code, ~F.text)
 async def process_non_text_in_fsm(message: Message) -> None:
-    """Если пользователь отправил фото/стикер вместо текста"""
     await message.answer(
-        "Отправь код текстом (или нажми /cancel).",
+        "Отправь код текстом.",
+        reply_markup=get_cancel_fsm_kb(),  # <-- ДОБАВЛЕНО
         parse_mode="HTML"
     )
 
 
 @router.message(Command("cancel"), StateFilter("*"))
 async def cmd_cancel(message: Message, state: FSMContext) -> None:
-    """Отмена текущего действия и сброс FSM"""
     await state.clear()
     await message.answer(
         "Действие отменено.",
@@ -173,7 +165,6 @@ async def cmd_leave(
     message: Message,
     couple_service: CoupleService,
 ) -> None:
-    """Обработка команды /leave"""
     user_id = message.from_user.id
     couple = await couple_service.get_couple(user_id)
     
@@ -193,7 +184,6 @@ async def cb_confirm_leave(
     callback: CallbackQuery,
     couple_service: CoupleService,
 ) -> None:
-    """Показывает подтверждение выхода из пары"""
     user_id = callback.from_user.id
     
     couple = await couple_service.get_couple(user_id)
@@ -216,7 +206,6 @@ async def cb_leave_yes(
     user_service: UserService,
     state: FSMContext,
 ) -> None:
-    """Подтверждение выхода из пары"""
     user_id = callback.from_user.id
     
     couple = await couple_service.get_couple(user_id)
@@ -246,7 +235,6 @@ async def cb_leave_yes(
 
 @router.callback_query(CoupleAction.filter(F.action == "leave_no"))
 async def cb_leave_no(callback: CallbackQuery) -> None:
-    """Отмена выхода из пары"""
     await callback.message.edit_text("Хорошо, остаёмся вместе! ❤️", parse_mode="HTML")
     await callback.answer()
 
@@ -257,18 +245,15 @@ async def cb_create_letter(
     state: FSMContext,
     couple_service: CoupleService,
 ) -> None:
-    """Начало создания письма — выбор даты"""
     user_id = callback.from_user.id
     
-    # Проверяем, что пользователь в паре
     couple = await couple_service.get_couple(user_id)
     if not couple:
         await callback.answer("Сначала создай пару 💑", show_alert=True)
         return
     
-    # Переводим в состояние выбора даты
     await state.set_state(LetterStates.choosing_date)
-    await state.update_data(couple_id=couple.id)  # Сохраняем couple_id в FSM
+    await state.update_data(couple_id=couple.id)
     
     await callback.message.edit_text(
         "💌 <b>Капсула времени</b>\n\n"

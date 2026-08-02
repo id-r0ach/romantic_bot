@@ -1,16 +1,14 @@
 from aiogram import Router, F
-from aiogram.types import Message
+from aiogram.types import Message, CallbackQuery
+from aiogram.fsm.context import FSMContext
 
 from bot.handlers.profile import cmd_profile
 from bot.handlers.couple import cmd_couple
 from bot.handlers.settings import cmd_settings
+from bot.utils.navigation import back_to_main_menu
+from bot.callbacks.main import NavAction
 from services.user_service import UserService
 from services.couple_service import CoupleService
-
-from aiogram.types import CallbackQuery
-from aiogram.fsm.context import FSMContext
-from bot.callbacks.main import NavAction
-from bot.keyboards.main_kb import get_main_menu_kb
 
 router = Router()
 
@@ -51,18 +49,18 @@ async def cb_back(
 ) -> None:
     """
     Универсальная кнопка 'Назад'.
-    1. Сбрасывает FSM (если пользователь был в процессе ввода кода).
-    2. Удаляет текущее сообщение с inline-клавиатурой (чтобы не засорять чат).
-    3. Показывает главное меню с reply-клавиатурой.
+    Делегирует всю логику очистки и возврата в navigation.py
     """
-    await state.clear()
-    
-    # Безопасное удаление сообщения бота
-    if callback.message:
-        await callback.message.delete()
-        
-    await callback.message.answer(
-        "Главное меню:",
-        reply_markup=get_main_menu_kb()
-    )
-    await callback.answer()
+    await back_to_main_menu(callback, state)
+
+
+@router.callback_query(NavAction.filter(F.action == "cancel_fsm"))
+async def cb_cancel_fsm(
+    callback: CallbackQuery,
+    state: FSMContext
+) -> None:
+    """
+    Универсальная отмена FSM-процесса.
+    Сбрасывает состояние и возвращает в главное меню.
+    """
+    await back_to_main_menu(callback, state)
