@@ -46,6 +46,10 @@ class LetterService:
         """Возвращает все письма, которые пора доставить."""
         return await self._letter_repo.get_pending(now)
 
+    async def get_letter_by_id(self, letter_id: int) -> Letter | None:
+        """Получает письмо по ID."""
+        return await self._letter_repo.get_by_id(letter_id)
+
     async def deliver_letter(self, letter: Letter) -> None:
         """Отправляет письмо, обновляет БД и уведомляет отправителя."""
         sender = await self._user_repo.get_by_tg_id(letter.sender_id)
@@ -54,14 +58,16 @@ class LetterService:
         sender_name = (sender.first_name or sender.username or "Твой партнер") if sender else "Твой партнер"
         receiver_name = (receiver.first_name or receiver.username or "партнер") if receiver else "партнер"
 
-        # Часовые пояса для конвертации дат
         receiver_tz = receiver.timezone if receiver else "UTC"
         sender_tz = sender.timezone if sender else "UTC"
 
-        # 1. Отправляем письмо получателю (даты в его локальном времени)
+        # 1. Отправляем письмо получателю С КНОПКАМИ
         try:
             created_local = to_local(letter.created_at, receiver_tz)
             opened_local = to_local(letter.open_date, receiver_tz)
+            
+            # Импортируем клавиатуру здесь, чтобы избежать циклических импортов
+            from bot.keyboards.letter_delivery_kb import get_letter_delivery_kb
             
             await self._bot.send_message(
                 chat_id=letter.receiver_id,
@@ -72,6 +78,7 @@ class LetterService:
                     f"Дата открытия: {opened_local.strftime('%d.%m.%Y в %H:%M')}\n\n"
                     f"✨ <i>{letter.text}</i>"
                 ),
+                reply_markup=get_letter_delivery_kb(letter.id),
                 parse_mode="HTML"
             )
         except TelegramBadRequest as e:
@@ -80,7 +87,7 @@ class LetterService:
         # 2. Помечаем как доставленное в БД
         await self._letter_repo.mark_delivered(letter.id, datetime.now(timezone.utc))
 
-        # 3. Уведомляем отправителя (дата доставки в его локальном времени)
+        # 3. Уведомляем отправителя
         try:
             delivered_local = to_local(datetime.now(timezone.utc), sender_tz)
             await self._bot.send_message(

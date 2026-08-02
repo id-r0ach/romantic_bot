@@ -4,7 +4,12 @@ from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 
 from bot.keyboards.main_kb import get_main_menu_kb
-from bot.keyboards.couple_kb import get_couple_main_kb, get_couple_in_pair_kb, get_couple_confirm_leave_kb
+from bot.keyboards.couple_kb import (
+    get_couple_main_kb, 
+    get_couple_in_pair_kb, 
+    get_couple_confirm_leave_kb,
+    get_couple_confirm_leave_final_kb,
+)
 from bot.keyboards.common_kb import get_cancel_fsm_kb
 from bot.callbacks.main import CoupleAction, NavAction, LetterAction
 from bot.states.couple import CoupleStates
@@ -85,7 +90,7 @@ async def cb_join_couple(
     await state.set_state(CoupleStates.waiting_for_code)
     await callback.message.answer(
         "Введи код приглашения:",
-        reply_markup=get_cancel_fsm_kb(),  # <-- ДОБАВЛЕНО
+        reply_markup=get_cancel_fsm_kb(),
         parse_mode="HTML"
     )
     await callback.answer()
@@ -145,7 +150,7 @@ async def process_join_code(
 async def process_non_text_in_fsm(message: Message) -> None:
     await message.answer(
         "Отправь код текстом.",
-        reply_markup=get_cancel_fsm_kb(),  # <-- ДОБАВЛЕНО
+        reply_markup=get_cancel_fsm_kb(),
         parse_mode="HTML"
     )
 
@@ -203,9 +208,32 @@ async def cb_confirm_leave(
 async def cb_leave_yes(
     callback: CallbackQuery,
     couple_service: CoupleService,
+) -> None:
+    """Показывает второе (финальное) подтверждение выхода из пары"""
+    user_id = callback.from_user.id
+    
+    couple = await couple_service.get_couple(user_id)
+    if not couple:
+        await callback.answer("Ты не в паре.", show_alert=True)
+        return
+    
+    await callback.message.edit_text(
+        "Это необратимо. Все активные письма будут отменены.\n\n"
+        "Вы точно хотите расстаться?",
+        reply_markup=get_couple_confirm_leave_final_kb(),
+        parse_mode="HTML"
+    )
+    await callback.answer()
+
+
+@router.callback_query(CoupleAction.filter(F.action == "leave_final_yes"))
+async def cb_leave_final_yes(
+    callback: CallbackQuery,
+    couple_service: CoupleService,
     user_service: UserService,
     state: FSMContext,
 ) -> None:
+    """Финальное подтверждение выхода из пары — выполняет разрыв"""
     user_id = callback.from_user.id
     
     couple = await couple_service.get_couple(user_id)
@@ -235,6 +263,14 @@ async def cb_leave_yes(
 
 @router.callback_query(CoupleAction.filter(F.action == "leave_no"))
 async def cb_leave_no(callback: CallbackQuery) -> None:
+    """Отмена на первом этапе подтверждения"""
+    await callback.message.edit_text("Хорошо, остаёмся вместе! ❤️", parse_mode="HTML")
+    await callback.answer()
+
+
+@router.callback_query(CoupleAction.filter(F.action == "leave_final_no"))
+async def cb_leave_final_no(callback: CallbackQuery) -> None:
+    """Отмена на втором (финальном) этапе подтверждения"""
     await callback.message.edit_text("Хорошо, остаёмся вместе! ❤️", parse_mode="HTML")
     await callback.answer()
 

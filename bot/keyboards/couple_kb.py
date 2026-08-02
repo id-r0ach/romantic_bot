@@ -66,3 +66,20 @@ def get_couple_confirm_leave_kb() -> InlineKeyboardMarkup:
         ]
     ]
     return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+def get_couple_confirm_leave_final_kb() -> InlineKeyboardMarkup:
+    """Клавиатура финального подтверждения выхода из пары."""
+    buttons = [
+        [
+            InlineKeyboardButton(
+                text="💔 Да, расстаться",
+                callback_data=CoupleAction(action="leave_final_yes").pack()
+            ),
+            InlineKeyboardButton(
+                text="Нет, я передумал",
+                callback_data=CoupleAction(action="leave_final_no").pack()
+            )
+        ]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=buttons)

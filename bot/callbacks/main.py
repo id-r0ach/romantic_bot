@@ -9,7 +9,7 @@ class NavAction(CallbackData, prefix="nav"):
 
 class CoupleAction(CallbackData, prefix="couple"):
     """Действия внутри экрана 'Пара'."""
-    action: Literal["create", "join", "leave_confirm", "leave_yes", "leave_no"]
+    action: Literal["create", "join", "leave_confirm", "leave_yes", "leave_no", "leave_final_yes", "leave_final_no"]
 
 
 class SettingsAction(CallbackData, prefix="settings"):
@@ -22,3 +22,15 @@ class LetterAction(CallbackData, prefix="letter"):
     """Действия с капсулой времени."""
     action: Literal["create", "select_date", "confirm", "cancel"]
     days: int | None = None  # 7, 30, 365 или None для "Своя дата"
+
+
+class LetterDeliveryAction(CallbackData, prefix="delivery"):
+    """Действия с доставленным письмом"""
+    action: Literal["thanks", "reply"]
+    letter_id: int
+
+
+class LetterListAction(CallbackData, prefix="letter_list"):
+    """Действия с письмом из списка /letters"""
+    action: Literal["edit_text", "edit_date", "cancel_letter"]
+    letter_id: int

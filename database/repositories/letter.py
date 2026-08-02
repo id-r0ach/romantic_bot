@@ -62,3 +62,9 @@ class LetterRepository(BaseRepository[Letter]):
         )
         result = await self.session.execute(query)
         return list(result.scalars().all())
+    
+    async def get_by_id(self, letter_id: int) -> Letter | None:
+        """Получает письмо по ID."""
+        query = select(Letter).where(Letter.id == letter_id)
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none()

@@ -4,8 +4,9 @@ from aiogram import Router, F
 from aiogram.types import CallbackQuery, Message
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
+from aiogram.exceptions import TelegramBadRequest
 
-from bot.callbacks.main import LetterAction, NavAction
+from bot.callbacks.main import LetterAction, LetterDeliveryAction
 from bot.keyboards.letter_kb import get_letter_date_keyboard, get_letter_confirm_keyboard
 from bot.keyboards.common_kb import get_cancel_fsm_kb
 from bot.states.letter import LetterStates
@@ -14,8 +15,78 @@ from services.couple_service import CoupleService
 from services.letter_service import LetterService
 from services.user_service import UserService
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 router = Router()
 
+
+# ==========================================
+# ХЕНДЛЕРЫ ДЛЯ КНОПОК ДОСТАВКИ (ПЕРВЫМИ!)
+# ==========================================
+
+@router.callback_query(LetterDeliveryAction.filter(F.action == "thanks"))
+async def cb_delivery_thanks(
+    callback: CallbackQuery,
+    callback_data: LetterDeliveryAction,
+    user_service: UserService,
+    letter_service: LetterService,
+) -> None:
+    """Обработка кнопки [❤️ Спасибо]"""
+    letter_id = callback_data.letter_id
+    user_id = callback.from_user.id
+    
+    letter = await letter_service.get_letter_by_id(letter_id)
+    if not letter:
+        await callback.answer("Письмо не найдено", show_alert=True)
+        return
+    
+    user = await user_service.get_profile(telegram_id=user_id)
+    user_name = (user.first_name or user.username or "Твой партнер") if user else "Твой партнер"
+    
+    try:
+        await callback.message.bot.send_message(
+            chat_id=letter.sender_id,
+            text=f"❤️ {user_name} получил(а) твоё письмо и отправил(а) ❤️",
+            parse_mode="HTML"
+        )
+    except TelegramBadRequest as e:
+        logger.warning(f"Не удалось уведомить отправителя {letter.sender_id}: {e}")
+    
+    await callback.message.edit_reply_markup(reply_markup=None)
+    await callback.answer("❤️ Спасибо отправлено!")
+
+
+@router.callback_query(LetterDeliveryAction.filter(F.action == "reply"))
+async def cb_delivery_reply(
+    callback: CallbackQuery,
+    state: FSMContext,
+    couple_service: CoupleService,
+) -> None:
+    """Обработка кнопки [💌 Ответить] — запуск FSM создания письма"""
+    user_id = callback.from_user.id
+    
+    couple = await couple_service.get_couple(user_id)
+    if not couple:
+        await callback.answer("Сначала создай пару 💑", show_alert=True)
+        return
+    
+    await state.set_state(LetterStates.choosing_date)
+    await state.update_data(couple_id=couple.id)
+    
+    await callback.message.edit_text(
+        "💌 <b>Капсула времени</b>\n\n"
+        "Выбери, когда твоё письмо будет открыто:",
+        reply_markup=get_letter_date_keyboard(),
+        parse_mode="HTML"
+    )
+    await callback.answer()
+
+
+# ==========================================
+# ОСТАЛЬНЫЕ ХЕНДЛЕРЫ
+# ==========================================
 
 @router.callback_query(LetterAction.filter(F.action == "select_date"), LetterStates.choosing_date)
 async def cb_select_date(
@@ -34,7 +105,7 @@ async def cb_select_date(
         await callback.message.edit_text(
             "🗓 Введи <b>дату</b> открытия в формате <b>ДД.ММ.ГГГГ</b>\n\n"
             "Например: 01.01.2026",
-            reply_markup=get_cancel_fsm_kb(),  # <-- ДОБАВЛЕНО
+            reply_markup=get_cancel_fsm_kb(),
             parse_mode="HTML"
         )
         await callback.answer()
@@ -51,7 +122,7 @@ async def cb_select_date(
         f"📅 Письмо будет открыто через {days} дней "
         f"({open_date_local.strftime('%d.%m.%Y в %H:%M')})\n\n"
         "Теперь напиши текст письма:",
-        reply_markup=get_cancel_fsm_kb(),  # <-- ДОБАВЛЕНО
+        reply_markup=get_cancel_fsm_kb(),
         parse_mode="HTML"
     )
     await callback.answer()
@@ -67,13 +138,13 @@ async def process_entering_date(message: Message, state: FSMContext) -> None:
             "⏰ Теперь введи <b>время</b> в формате <b>ЧЧ:ММ</b>\n\n"
             "<i>Формат 24 часа.</i>\n"
             "Например: 12:00",
-            reply_markup=get_cancel_fsm_kb(),  # <-- ДОБАВЛЕНО
+            reply_markup=get_cancel_fsm_kb(),
             parse_mode="HTML"
         )
     except ValueError:
         await message.answer(
             "Неверная дата. Используй формат <b>ДД.ММ.ГГГГ</b>", 
-            reply_markup=get_cancel_fsm_kb(),  # <-- ДОБАВЛЕНО
+            reply_markup=get_cancel_fsm_kb(),
             parse_mode="HTML"
         )
 
@@ -82,7 +153,7 @@ async def process_entering_date(message: Message, state: FSMContext) -> None:
 async def process_non_text_date(message: Message) -> None:
     await message.answer(
         "Отправь дату текстом в формате ДД.ММ.ГГГГ",
-        reply_markup=get_cancel_fsm_kb()  # <-- ДОБАВЛЕНО
+        reply_markup=get_cancel_fsm_kb()
     )
 
 
@@ -107,7 +178,7 @@ async def process_entering_time(
         if open_date_utc <= datetime.now(timezone.utc):
             await message.answer(
                 "⏳ Дата и время должны быть в будущем. Попробуй указать время позже.",
-                reply_markup=get_cancel_fsm_kb()  # <-- ДОБАВЛЕНО
+                reply_markup=get_cancel_fsm_kb()
             )
             return
         
@@ -119,13 +190,13 @@ async def process_entering_time(
         await message.answer(
             f"📅 Письмо будет открыто <b>{open_date_local.strftime('%d.%m.%Y в %H:%M')}</b>\n\n"
             "Теперь напиши текст письма:",
-            reply_markup=get_cancel_fsm_kb(),  # <-- ДОБАВЛЕНО
+            reply_markup=get_cancel_fsm_kb(),
             parse_mode="HTML"
         )
     except ValueError:
         await message.answer(
             "Неверное время. Используй формат <b>ЧЧ:ММ</b> (24 часа)", 
-            reply_markup=get_cancel_fsm_kb(),  # <-- ДОБАВЛЕНО
+            reply_markup=get_cancel_fsm_kb(),
             parse_mode="HTML"
         )
 
@@ -134,7 +205,7 @@ async def process_entering_time(
 async def process_non_text_time(message: Message) -> None:
     await message.answer(
         "Отправь время текстом в формате ЧЧ:ММ",
-        reply_markup=get_cancel_fsm_kb()  # <-- ДОБАВЛЕНО
+        reply_markup=get_cancel_fsm_kb()
     )
 
 
@@ -192,7 +263,7 @@ async def process_letter_text(
 async def process_non_text(message: Message) -> None:
     await message.answer(
         "Отправь текст письма",
-        reply_markup=get_cancel_fsm_kb()  # <-- ДОБАВЛЕНО
+        reply_markup=get_cancel_fsm_kb()
     )
 
 
@@ -266,6 +337,7 @@ async def cmd_show_letters(
     couple_service: CoupleService,
     user_service: UserService,
 ) -> None:
+    """Показывает все активные письма в виде красивого списка"""
     user_id = message.from_user.id
     
     couple = await couple_service.get_couple(user_id)
@@ -287,11 +359,20 @@ async def cmd_show_letters(
         return
     
     lines = ["💌 <b>Твои активные письма:</b>\n"]
+    
     for i, letter in enumerate(letters, 1):
         open_date_local = to_local(letter.open_date, user_tz)
+        date_str = open_date_local.strftime('%d.%m.%Y в %H:%M')
+        
+        preview = letter.text[:100]
+        if len(letter.text) > 100:
+            preview += "..."
+        
         lines.append(
-            f"{i}. 📅 {open_date_local.strftime('%d.%m.%Y в %H:%M')}\n"
-            f"   <i>{letter.text[:50]}{'...' if len(letter.text) > 50 else ''}</i>"
+            f"<b>{i}.</b> 📅 {date_str}\n"
+            f"<i>{preview}</i>\n"
         )
+    
+    lines.append("\n<i>Письма нельзя изменить после создания.</i>")
     
     await message.answer("\n".join(lines), parse_mode="HTML")
