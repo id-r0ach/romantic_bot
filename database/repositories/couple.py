@@ -80,3 +80,39 @@ class CoupleRepository(BaseRepository[Couple]):
             .values(status="broken")
         )
         await self.session.execute(query)
+
+    async def update_invite_code(
+        self,
+        couple_id: int,
+        invite_code: str,
+        invite_expires: datetime,
+    ) -> Couple:
+        """Обновить код приглашения в pending-паре"""
+        query = (
+            update(Couple)
+            .where(
+                Couple.id == couple_id,
+                Couple.status == "pending",
+            )
+            .values(
+                invite_code=invite_code,
+                invite_expires=invite_expires,
+            )
+            .returning(Couple)
+        )
+        result = await self.session.execute(query)
+        await self.session.flush()
+        return result.scalar_one()
+
+    async def cancel_pending_by_user(self, user_id: int) -> None:
+        """Отменить pending-пары пользователя, где он является создателем"""
+        query = (
+            update(Couple)
+            .where(
+                Couple.user1_id == user_id,
+                Couple.status == "pending",
+            )
+            .values(status="cancelled")
+        )
+        await self.session.execute(query)
+        await self.session.flush()

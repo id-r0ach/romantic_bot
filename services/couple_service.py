@@ -30,25 +30,32 @@ class CoupleService:
         return "".join(secrets.choice(alphabet) for _ in range(6))
 
     async def create_couple(self, user_id: int) -> Couple:
-        """Создать новую пару и вернуть её с кодом"""
+        """Создать новую пару или обновить код в pending-паре"""
         existing = await self.couple_repo.get_by_user_id(user_id)
         if existing:
             raise ValueError("Ты уже в паре")
 
-        pending = await self.couple_repo.get_pending_by_user_id(user_id)
-        if pending:
-            return pending
-
         invite_code = self._generate_invite_code()
         invite_expires = datetime.now(timezone.utc) + timedelta(hours=24)
 
+        pending = await self.couple_repo.get_pending_by_user_id(user_id)
+
+        if pending:
+            try:
+                return await self.couple_repo.update_invite_code(
+                    couple_id=pending.id,
+                    invite_code=invite_code,
+                    invite_expires=invite_expires,
+                )
+            except IntegrityError:
+                raise ValueError("Не удалось создать код. Попробуй ещё раз")
+
         try:
-            couple = await self.couple_repo.create_couple(
+            return await self.couple_repo.create_couple(
                 user1_id=user_id,
                 invite_code=invite_code,
                 invite_expires=invite_expires,
             )
-            return couple
         except IntegrityError:
             raise ValueError("Не удалось создать код. Попробуй ещё раз")
 
@@ -69,6 +76,10 @@ class CoupleService:
             raise ValueError("Нельзя присоединиться к самому себе")
 
         activated = await self.couple_repo.activate_couple(couple.id, user_id)
+
+        # Если пользователь до этого создавал свою pending-пару — отменяем её
+        await self.couple_repo.cancel_pending_by_user(user_id)
+
         return activated
 
     async def get_couple(self, user_id: int) -> Couple | None:

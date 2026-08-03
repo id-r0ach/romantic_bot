@@ -18,6 +18,8 @@ from bot.keyboards.letter_kb import get_letter_date_keyboard
 from services.couple_service import CoupleService
 from services.user_service import UserService
 
+from bot.utils.timezone_utils import to_local
+
 router = Router()
 
 
@@ -53,21 +55,26 @@ async def cmd_couple(
 async def cb_create_couple(
     callback: CallbackQuery,
     couple_service: CoupleService,
+    user_service: UserService,
 ) -> None:
     user_id = callback.from_user.id
-    
+
     try:
         couple = await couple_service.create_couple(user_id)
     except ValueError as e:
         await callback.answer(str(e), show_alert=True)
         return
-    
-    expires_at = couple.invite_expires.strftime("%d.%m.%Y %H:%M")
-    
+
+    user = await user_service.get_profile(user_id)
+    tz_name = user.timezone if user and user.timezone else "UTC"
+
+    expires_local = to_local(couple.invite_expires, tz_name)
+    expires_at = expires_local.strftime("%d.%m.%Y %H:%M")
+
     await callback.message.answer(
         f"🔑 Твой код приглашения:\n\n"
         f"<b>{couple.invite_code}</b>\n\n"
-        f"Действует до {expires_at} (UTC, 24 часа).\n"
+        f"Действует до {expires_at} (по твоему времени, 24 часа).\n"
         f"Отправь его партнёру, чтобы он мог присоединиться.",
         parse_mode="HTML"
     )
