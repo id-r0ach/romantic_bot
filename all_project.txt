@@ -1,0 +1,3422 @@
+PROJECT DUMP: D:\romantic_bot
+
+
+==================== FILE: README.md ====================
+# Romantic Bot ❤️
+
+Telegram-бот, который помогает создавать настоящие эмоциональные события в отношениях.
+
+Проект ориентирован не только на отправку красивых сообщений, а на создание совместных воспоминаний, укрепление отношений и помощь людям на разных этапах общения — от знакомства до долгих отношений.
+
+---
+
+# Основные возможности
+
+Планируемые функции проекта:
+
+* 💌 красивые романтические страницы (Telegram Mini App);
+* 📖 история отношений;
+* 🌳 дерево отношений;
+* ❤️ «100 причин, почему я тебя люблю»;
+* ⏳ капсула времени;
+* 🎡 генератор идей для свиданий;
+* 🖼️ фотоистории и слайд-шоу;
+* 🤖 AI-функции.
+
+---
+
+# Технологический стек
+
+## Backend
+
+* Python 3.12+
+* aiogram 3.x
+
+## База данных
+
+* PostgreSQL
+* SQLAlchemy 2 (Async ORM)
+* Alembic
+
+## Планируется
+
+* FastAPI
+* Telegram Mini App
+* Redis
+* AI-интеграции
+
+---
+
+# Архитектура проекта
+
+```
+romantic_bot/
+│
+├── bot/                 # Telegram-специфичный код
+│
+├── database/            # Работа с базой данных
+│
+├── services/            # Бизнес-логика
+│
+├── config.py            # Конфигурация приложения
+│
+├── main.py              # Точка входа
+│
+└── requirements.txt
+```
+
+### Назначение директорий
+
+**bot/**
+
+* handlers
+* keyboards
+* middlewares
+* filters
+
+Содержит только код, связанный с Telegram.
+
+---
+
+**services/**
+
+Бизнес-логика приложения.
+
+Этот слой не должен зависеть от Telegram API, чтобы в будущем его можно было использовать из FastAPI, Mini App или других интерфейсов.
+
+---
+
+**database/**
+
+Содержит:
+
+* модели SQLAlchemy;
+* миграции Alembic;
+* подключение к PostgreSQL;
+* работу с сессиями.
+
+---
+
+# Установка
+
+## 1. Клонировать репозиторий
+
+```bash
+git clone https://github.com/your-username/romantic-bot.git
+cd romantic-bot
+```
+
+## 2. Создать виртуальное окружение
+
+```bash
+python -m venv .venv
+```
+
+## 3. Активировать окружение
+
+### Windows
+
+```powershell
+.venv\Scripts\activate
+```
+
+### Linux / macOS
+
+```bash
+source .venv/bin/activate
+```
+
+## 4. Установить зависимости
+
+```bash
+pip install -r requirements.txt
+```
+
+## 5. Создать файл `.env`
+
+На основе `.env.example`.
+
+Пример:
+
+```env
+BOT_TOKEN=your_bot_token
+DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/romantic_bot_db
+```
+
+## 6. Запустить бота
+
+```bash
+python main.py
+```
+
+---
+
+# Переменные окружения
+
+| Переменная   | Описание                     |
+| ------------ | ---------------------------- |
+| BOT_TOKEN    | Токен Telegram-бота          |
+| DATABASE_URL | URL подключения к PostgreSQL |
+
+---
+
+# Принципы разработки
+
+Проект придерживается нескольких простых принципов:
+
+* разделение Telegram-кода и бизнес-логики;
+* современный стек Python;
+* постепенное развитие архитектуры без преждевременного усложнения;
+* чистый и читаемый код;
+* возможность масштабирования проекта без полной переработки структуры.
+
+---
+
+# Статус проекта
+
+🚧 Проект находится в активной разработке.
+
+
+==================== FILE: alembic.ini ====================
+# A generic, single database configuration.
+
+[alembic]
+# path to migration scripts.
+# this is typically a path given in POSIX (e.g. forward slashes)
+# format, relative to the token %(here)s which refers to the location of this
+# ini file
+script_location = %(here)s/alembic
+
+# template used to generate migration file names; The default value is %%(rev)s_%%(slug)s
+# Uncomment the line below if you want the files to be prepended with date and time
+# see https://alembic.sqlalchemy.org/en/latest/tutorial.html#editing-the-ini-file
+# for all available tokens
+# file_template = %%(year)d_%%(month).2d_%%(day).2d_%%(hour).2d%%(minute).2d-%%(rev)s_%%(slug)s
+# Or organize into date-based subdirectories (requires recursive_version_locations = true)
+# file_template = %%(year)d/%%(month).2d/%%(day).2d_%%(hour).2d%%(minute).2d_%%(second).2d_%%(rev)s_%%(slug)s
+
+# sys.path path, will be prepended to sys.path if present.
+# defaults to the current working directory.  for multiple paths, the path separator
+# is defined by "path_separator" below.
+prepend_sys_path = .
+
+# timezone to use when rendering the date within the migration file
+# as well as the filename.
+# If specified, requires the tzdata library which can be installed by adding
+# `alembic[tz]` to the pip requirements.
+# string value is passed to ZoneInfo()
+# leave blank for localtime
+# timezone =
+
+# max length of characters to apply to the "slug" field
+# truncate_slug_length = 40
+
+# set to 'true' to run the environment during
+# the 'revision' command, regardless of autogenerate
+# revision_environment = false
+
+# set to 'true' to allow .pyc and .pyo files without
+# a source .py file to be detected as revisions in the
+# versions/ directory
+# sourceless = false
+
+# version location specification; This defaults
+# to <script_location>/versions.  When using multiple version
+# directories, initial revisions must be specified with --version-path.
+# The path separator used here should be the separator specified by "path_separator"
+# below.
+# version_locations = %(here)s/bar:%(here)s/bat:%(here)s/alembic/versions
+
+# path_separator; This indicates what character is used to split lists of file
+# paths, including version_locations and prepend_sys_path within configparser
+# files such as alembic.ini.
+# The default rendered in new alembic.ini files is "os", which uses os.pathsep
+# to provide os-dependent path splitting.
+#
+# Note that in order to support legacy alembic.ini files, this default does NOT
+# take place if path_separator is not present in alembic.ini.  If this
+# option is omitted entirely, fallback logic is as follows:
+#
+# 1. Parsing of the version_locations option falls back to using the legacy
+#    "version_path_separator" key, which if absent then falls back to the legacy
+#    behavior of splitting on spaces and/or commas.
+# 2. Parsing of the prepend_sys_path option falls back to the legacy
+#    behavior of splitting on spaces, commas, or colons.
+#
+# Valid values for path_separator are:
+#
+# path_separator = :
+# path_separator = ;
+# path_separator = space
+# path_separator = newline
+#
+# Use os.pathsep. Default configuration used for new projects.
+path_separator = os
+
+
+# set to 'true' to search source files recursively
+# in each "version_locations" directory
+# new in Alembic version 1.10
+# recursive_version_locations = false
+
+# the output encoding used when revision files
+# are written from script.py.mako
+# output_encoding = utf-8
+
+# database URL.  This is consumed by the user-maintained env.py script only.
+# other means of configuring database URLs may be customized within the env.py
+# file.
+sqlalchemy.url = driver://user:pass@localhost/dbname
+
+
+[post_write_hooks]
+# post_write_hooks defines scripts or Python functions that are run
+# on newly generated revision scripts.  See the documentation for further
+# detail and examples
+
+# format using "black" - use the console_scripts runner, against the "black" entrypoint
+# hooks = black
+# black.type = console_scripts
+# black.entrypoint = black
+# black.options = -l 79 REVISION_SCRIPT_FILENAME
+
+# lint with attempts to fix using "ruff" - use the module runner, against the "ruff" module
+# hooks = ruff
+# ruff.type = module
+# ruff.module = ruff
+# ruff.options = check --fix REVISION_SCRIPT_FILENAME
+
+# Alternatively, use the exec runner to execute a binary found on your PATH
+# hooks = ruff
+# ruff.type = exec
+# ruff.executable = ruff
+# ruff.options = check --fix REVISION_SCRIPT_FILENAME
+
+# Logging configuration.  This is also consumed by the user-maintained
+# env.py script only.
+[loggers]
+keys = root,sqlalchemy,alembic
+
+[handlers]
+keys = console
+
+[formatters]
+keys = generic
+
+[logger_root]
+level = WARNING
+handlers = console
+qualname =
+
+[logger_sqlalchemy]
+level = WARNING
+handlers =
+qualname = sqlalchemy.engine
+
+[logger_alembic]
+level = INFO
+handlers =
+qualname = alembic
+
+[handler_console]
+class = StreamHandler
+args = (sys.stderr,)
+level = NOTSET
+formatter = generic
+
+[formatter_generic]
+format = %(levelname)-5.5s [%(name)s] %(message)s
+datefmt = %H:%M:%S
+
+
+==================== FILE: collect_project.py ====================
+import argparse
+import os
+from pathlib import Path
+
+# Папки, которые обычно не нужны в дампе проекта
+IGNORE_DIRS = {
+    ".git",
+    ".hg",
+    ".svn",
+    ".idea",
+    ".vscode",
+    ".next",
+    ".nuxt",
+    ".cache",
+    ".pytest_cache",
+    ".mypy_cache",
+    "__pycache__",
+    "node_modules",
+    "venv",
+    ".venv",
+    "env",
+    "dist",
+    "build",
+    "out",
+    "target",
+    "coverage",
+    ".gradle",
+    ".mvn",
+}
+
+# Расширения, которые обычно являются бинарными или тяжелыми
+IGNORE_SUFFIXES = {
+    # Изображения
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".webp",
+    ".ico",
+    ".bmp",
+    ".tiff",
+    ".svgz",
+
+    # Шрифты
+    ".woff",
+    ".woff2",
+    ".ttf",
+    ".otf",
+    ".eot",
+
+    # Архивы
+    ".zip",
+    ".rar",
+    ".7z",
+    ".tar",
+    ".gz",
+    ".bz2",
+    ".xz",
+    ".jar",
+    ".war",
+
+    # Бинарники/скомпилированные файлы
+    ".exe",
+    ".dll",
+    ".so",
+    ".dylib",
+    ".bin",
+    ".pyc",
+    ".pyo",
+    ".class",
+    ".o",
+    ".obj",
+    ".wasm",
+
+    # Медиа
+    ".mp3",
+    ".mp4",
+    ".avi",
+    ".mov",
+    ".mkv",
+    ".webm",
+    ".wav",
+    ".flac",
+
+    # Базы данных и другое
+    ".db",
+    ".sqlite",
+    ".sqlite3",
+    ".pdf",
+}
+
+# Файлы, которые лучше не включать, чтобы случайно не включить секреты
+IGNORE_FILES = {
+    ".env",
+    ".env.local",
+    ".env.development",
+    ".env.production",
+    ".env.test",
+    "id_rsa",
+    "id_ed25519",
+    ".npmrc",
+    ".pypirc",
+}
+
+
+def should_skip_dir(name: str, include_hidden: bool) -> bool:
+    if name in IGNORE_DIRS:
+        return True
+
+    if name.startswith(".") and not include_hidden:
+        return True
+
+    return False
+
+
+def is_probably_binary(path: Path) -> bool:
+    try:
+        with path.open("rb") as f:
+            chunk = f.read(8192)
+            return b"\0" in chunk
+    except OSError:
+        return True
+
+
+def read_text_file(path: Path):
+    if is_probably_binary(path):
+        return None
+
+    # Сначала пробуем UTF-8, потом Windows-1251 на случай кириллицы
+    for encoding in ("utf-8", "cp1251"):
+        try:
+            return path.read_text(encoding=encoding)
+        except UnicodeDecodeError:
+            continue
+        except OSError as e:
+            return f"[ERROR] Не удалось прочитать файл: {e}"
+
+    # Если кодировка не определилась, читаем с заменой символов
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+        return text + "\n[WARNING] Файл прочитан с заменой символов. Возможна нестандартная кодировка."
+    except OSError as e:
+        return f"[ERROR] Не удалось прочитать файл: {e}"
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Собирает текстовые файлы проекта в один файл."
+    )
+
+    parser.add_argument(
+        "source",
+        help="Папка проекта, например: . или C:/projects/my_project",
+    )
+
+    parser.add_argument(
+        "output",
+        help="Файл, куда всё записать, например: all_project.txt",
+    )
+
+    parser.add_argument(
+        "--max-size",
+        type=int,
+        default=2_000_000,
+        help="Максимальный размер одного файла в байтах. По умолчанию 2 MB.",
+    )
+
+    parser.add_argument(
+        "--include-hidden",
+        action="store_true",
+        help="Не пропускать скрытые файлы и папки, начинающиеся с точки.",
+    )
+
+    args = parser.parse_args()
+
+    source = Path(args.source).expanduser().resolve()
+    output = Path(args.output).expanduser().resolve()
+
+    if not source.is_dir():
+        raise SystemExit(f"Папка проекта не найдена: {source}")
+
+    files = []
+
+    for root, dirs, names in os.walk(source):
+        root_path = Path(root)
+
+        # Сортируем папки, чтобы порядок был предсказуемым
+        dirs[:] = sorted(
+            d for d in dirs if not should_skip_dir(d, args.include_hidden)
+        )
+
+        for name in sorted(names):
+            path = root_path / name
+
+            try:
+                resolved_path = path.resolve()
+            except OSError:
+                continue
+
+            # Пропускаем сам итоговый файл, если он лежит внутри проекта
+            if resolved_path == output:
+                continue
+
+            # Пропускаем скрытые файлы, если не указан --include-hidden
+            if not args.include_hidden and name.startswith("."):
+                continue
+
+            # Пропускаем потенциально секретные файлы
+            if name in IGNORE_FILES:
+                continue
+
+            # Пропускаем нежелательные расширения
+            if path.suffix.lower() in IGNORE_SUFFIXES:
+                continue
+
+            if path.is_file():
+                files.append(path)
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+
+    with output.open("w", encoding="utf-8") as out:
+        out.write(f"PROJECT DUMP: {source}\n")
+
+        for path in files:
+            relative_path = path.relative_to(source).as_posix()
+
+            out.write("\n\n")
+            out.write("=" * 20)
+            out.write(f" FILE: {relative_path} ")
+            out.write("=" * 20)
+            out.write("\n")
+
+            try:
+                size = path.stat().st_size
+            except OSError as e:
+                out.write(f"[ERROR] Не удалось получить информацию о файле: {e}\n")
+                continue
+
+            if size > args.max_size:
+                out.write(
+                    f"[SKIPPED] Файл больше лимита: {size} байт. "
+                    f"Лимит: {args.max_size} байт.\n"
+                )
+                continue
+
+            content = read_text_file(path)
+
+            if content is None:
+                out.write("[SKIPPED] Похоже, это двоичный файл.\n")
+            else:
+                out.write(content.rstrip())
+                out.write("\n")
+
+    print(f"Готово: {output}")
+    print(f"Файлов обработано: {len(files)}")
+
+
+if __name__ == "__main__":
+    main()
+
+
+==================== FILE: config.py ====================
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    BOT_TOKEN: str
+
+    # Параметры подключения к PostgreSQL
+    POSTGRES_USER: str = "postgres"
+    POSTGRES_PASSWORD: str = "postgres"
+    POSTGRES_HOST: str = "localhost"
+    POSTGRES_PORT: int = 5432
+    POSTGRES_DB: str = "romantic_bot_db"
+
+    # Флаг логирования SQL-запросов (True = логируются все SQL в консоль)
+    DB_ECHO: bool = False
+
+    # Параметры подключения к Redis
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+    REDIS_DB: int = 0
+
+    @property
+    def database_url(self) -> str:
+        """Динамически собирает async DSN для asyncpg."""
+        return (
+            f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+            f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+        )
+
+    @property
+    def redis_url(self) -> str:
+        """Динамически собирает URL для подключения к Redis."""
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+
+settings = Settings()
+
+
+==================== FILE: docker-compose.yml ====================
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: romantic_bot_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: romantic_bot_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:
+
+
+==================== FILE: main.py ====================
+import asyncio
+import logging
+import sys
+from datetime import datetime, timezone
+
+from aiogram import Bot, Dispatcher
+from aiogram.fsm.storage.redis import RedisStorage
+from aiogram.types import BotCommand
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from sqlalchemy import text
+
+from bot.handlers import router
+from bot.middlewares.db import DbSessionMiddleware
+from config import settings
+from database import async_session_maker, engine
+from database.repositories.letter import LetterRepository
+from database.repositories.user import UserRepository
+from services.letter_service import LetterService
+
+logging.basicConfig(
+    level=logging.INFO,
+    stream=sys.stdout,
+)
+
+
+async def check_db_connection() -> None:
+    """Проверяет подключение к базе данных через запрос SELECT 1."""
+    try:
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+        logging.info("Успешное подключение к PostgreSQL!")
+    except Exception as e:
+        logging.critical(f"Ошибка при подключении к базе данных: {e}")
+        raise e
+
+
+async def set_bot_commands(bot: Bot) -> None:
+    """Устанавливает команды бота для автодополнения в поле ввода."""
+    commands = [
+        BotCommand(command="start", description="Начать работу с ботом"),
+        BotCommand(command="profile", description="Мой профиль"),
+        BotCommand(command="couple", description="Управление парой"),
+        BotCommand(command="letters", description="Мои активные письма"),
+        BotCommand(command="settings", description="Настройки"),
+        BotCommand(command="leave", description="Выйти из пары"),
+        BotCommand(command="cancel", description="Отменить текущее действие"),
+    ]
+    await bot.set_my_commands(commands)
+
+
+async def check_pending_letters(bot: Bot) -> None:
+    """Фоновая задача: проверка и доставка писем каждую минуту."""
+    async with async_session_maker() as session:
+        letter_repo = LetterRepository(session)
+        user_repo = UserRepository(session)
+        letter_service = LetterService(letter_repo, user_repo, bot)
+        
+        now = datetime.now(timezone.utc)
+        
+        # <-- ИЗМЕНЕНО: Оборачиваем в транзакцию для защиты от гонки
+        async with session.begin():
+            # get_pending теперь использует FOR UPDATE SKIP LOCKED
+            pending_letters = await letter_repo.get_pending(now)
+            
+            for letter in pending_letters:
+                # <-- ИЗМЕНЕНО: Идемпотентность (дополнительная защита)
+                if letter.status != "pending":
+                    continue
+                
+                try:
+                    await letter_service.deliver_letter(letter)
+                    logging.info(f"Письмо {letter.id} успешно доставлено.")
+                except Exception as e:
+                    logging.error(f"Ошибка при доставке письма {letter.id}: {e}")
+                    # Пробрасываем исключение, чтобы session.begin() автоматически сделал rollback
+                    raise
+
+
+async def main() -> None:
+    await check_db_connection()
+
+    storage = RedisStorage.from_url(settings.redis_url)
+    
+    dp = Dispatcher(storage=storage)
+    dp.update.middleware(DbSessionMiddleware(session_pool=async_session_maker))
+    dp.include_router(router)
+
+    # --- ИНИЦИАЛИЗАЦИЯ ПЛАНИРОВЩИКА ---
+    scheduler = AsyncIOScheduler(timezone="UTC")
+    
+    async with Bot(token=settings.BOT_TOKEN) as bot:
+        scheduler.add_job(
+            check_pending_letters, 
+            "interval", 
+            minutes=1, 
+            kwargs={"bot": bot},
+            id="check_pending_letters_job",
+            replace_existing=True
+        )
+        scheduler.start()
+        logging.info("Планировщик задач запущен (проверка писем каждую минуту).")
+
+        try:
+            await set_bot_commands(bot)
+            logging.info("Запуск бота...")
+            await dp.start_polling(bot)
+        finally:
+            logging.info("Остановка бота: закрываем пул соединений БД и планировщик...")
+            scheduler.shutdown()
+            await engine.dispose()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+
+
+==================== FILE: requirements.txt ====================
+aiogram~=3.22
+SQLAlchemy~=2.0
+asyncpg~=0.30
+alembic~=1.16
+pydantic-settings~=2.11
+python-dotenv~=1.1
+tzdata~=2026.3
+apscheduler~=3.11
+redis~=5.2
+
+
+==================== FILE: alembic/README ====================
+Generic single-database configuration with an async dbapi.
+
+
+==================== FILE: alembic/env.py ====================
+import asyncio
+from logging.config import fileConfig
+
+from alembic import context
+from sqlalchemy import pool
+from sqlalchemy.engine import Connection
+from sqlalchemy.ext.asyncio import async_engine_from_config
+
+# Импортируем нашу конфигурацию и базовую модель
+from config import settings
+from database.models import Base
+
+# Это объект конфигурации Alembic
+config = context.config
+
+# Настройка логирования из alembic.ini
+if config.config_file_name is not None:
+    fileConfig(config.config_file_name)
+
+# Динамически подставляем DSN из нашего config.py (избегаем дублирования в alembic.ini)
+config.set_main_option("sqlalchemy.url", settings.database_url)
+
+# Связываем Alembic с нашими ORM-моделями для автогенерации
+target_metadata = Base.metadata
+
+
+def run_migrations_offline() -> None:
+    """Запуск миграций в 'offline' режиме (без живого подключения к БД)."""
+    url = config.get_main_option("sqlalchemy.url")
+    context.configure(
+        url=url,
+        target_metadata=target_metadata,
+        literal_binds=True,
+        dialect_opts={"paramstyle": "named"},
+    )
+
+    with context.begin_transaction():
+        context.run_migrations()
+
+
+def do_run_migrations(connection: Connection) -> None:
+    context.configure(connection=connection, target_metadata=target_metadata)
+
+    with context.begin_transaction():
+        context.run_migrations()
+
+
+async def run_migrations_online() -> None:
+    """Запуск миграций в 'online' режиме (с подключением к asyncpg)."""
+    connectable = async_engine_from_config(
+        config.get_section(config.config_ini_section, {}),
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
+    )
+
+    async with connectable.connect() as connection:
+        await connection.run_sync(do_run_migrations)
+
+    await connectable.dispose()
+
+
+if context.is_offline_mode():
+    run_migrations_offline()
+else:
+    asyncio.run(run_migrations_online())
+
+
+==================== FILE: alembic/script.py.mako ====================
+"""${message}
+
+Revision ID: ${up_revision}
+Revises: ${down_revision | comma,n}
+Create Date: ${create_date}
+
+"""
+from typing import Sequence, Union
+
+from alembic import op
+import sqlalchemy as sa
+${imports if imports else ""}
+
+# revision identifiers, used by Alembic.
+revision: str = ${repr(up_revision)}
+down_revision: Union[str, Sequence[str], None] = ${repr(down_revision)}
+branch_labels: Union[str, Sequence[str], None] = ${repr(branch_labels)}
+depends_on: Union[str, Sequence[str], None] = ${repr(depends_on)}
+
+
+def upgrade() -> None:
+    """Upgrade schema."""
+    ${upgrades if upgrades else "pass"}
+
+
+def downgrade() -> None:
+    """Downgrade schema."""
+    ${downgrades if downgrades else "pass"}
+
+
+==================== FILE: alembic/versions/08ea00b33529_add_letter_model.py ====================
+"""add letter model
+
+Revision ID: 08ea00b33529
+Revises: 3db13dfca747
+Create Date: 2026-08-01 10:47:53.576016
+
+"""
+from typing import Sequence, Union
+
+from alembic import op
+import sqlalchemy as sa
+
+
+# revision identifiers, used by Alembic.
+revision: str = '08ea00b33529'
+down_revision: Union[str, Sequence[str], None] = '3db13dfca747'
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    """Upgrade schema."""
+    # ### commands auto generated by Alembic - please adjust! ###
+    op.create_table('letters',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('couple_id', sa.Integer(), nullable=False),
+    sa.Column('sender_id', sa.BigInteger(), nullable=False),
+    sa.Column('receiver_id', sa.BigInteger(), nullable=False),
+    sa.Column('text', sa.String(length=4096), nullable=False),
+    sa.Column('open_date', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('status', sa.String(length=20), server_default='pending', nullable=False),
+    sa.Column('delivered_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['couple_id'], ['couples.id'], ),
+    sa.ForeignKeyConstraint(['receiver_id'], ['users.telegram_id'], ),
+    sa.ForeignKeyConstraint(['sender_id'], ['users.telegram_id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    # ### end Alembic commands ###
+
+
+def downgrade() -> None:
+    """Downgrade schema."""
+    # ### commands auto generated by Alembic - please adjust! ###
+    op.drop_table('letters')
+    # ### end Alembic commands ###
+
+
+==================== FILE: alembic/versions/3db13dfca747_remove_timezone_column_from_users.py ====================
+"""remove timezone column from users
+
+Revision ID: 3db13dfca747
+Revises: bb0d4dc90537
+Create Date: 2026-07-31 21:08:59.057993
+
+"""
+from typing import Sequence, Union
+
+from alembic import op
+import sqlalchemy as sa
+
+
+# revision identifiers, used by Alembic.
+revision: str = '3db13dfca747'
+down_revision: Union[str, Sequence[str], None] = 'bb0d4dc90537'
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    """Upgrade schema."""
+    # ### commands auto generated by Alembic - please adjust! ###
+    pass
+    # ### end Alembic commands ###
+
+
+def downgrade() -> None:
+    """Downgrade schema."""
+    # ### commands auto generated by Alembic - please adjust! ###
+    pass
+    # ### end Alembic commands ###
+
+
+==================== FILE: alembic/versions/64d5e3550fb9_add_timezone_and_notifications_with_.py ====================
+"""add timezone and notifications with server defaults
+
+Revision ID: 64d5e3550fb9
+Revises: f96f0cc118cd
+Create Date: 2026-07-30 12:05:55.901771
+
+"""
+from typing import Sequence, Union
+
+from alembic import op
+import sqlalchemy as sa
+
+
+# revision identifiers, used by Alembic.
+revision: str = '64d5e3550fb9'
+down_revision: Union[str, Sequence[str], None] = 'f96f0cc118cd'
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    """Upgrade schema."""
+    # ### commands auto generated by Alembic - please adjust! ###
+    op.add_column('users', sa.Column('timezone', sa.String(length=32), server_default='UTC', nullable=False))
+    op.add_column('users', sa.Column('notifications', sa.Boolean(), server_default='true', nullable=False))
+    # ### end Alembic commands ###
+
+
+def downgrade() -> None:
+    """Downgrade schema."""
+    # ### commands auto generated by Alembic - please adjust! ###
+    op.drop_column('users', 'notifications')
+    op.drop_column('users', 'timezone')
+    # ### end Alembic commands ###
+
+
+==================== FILE: alembic/versions/bb0d4dc90537_fix_couple_foreign_key_to_telegram_id.py ====================
+"""fix couple foreign key to telegram_id
+
+Revision ID: bb0d4dc90537
+Revises: 64d5e3550fb9
+Create Date: 2026-07-30 22:10:01.857301
+
+"""
+from typing import Sequence, Union
+
+from alembic import op
+import sqlalchemy as sa
+
+
+# revision identifiers, used by Alembic.
+revision: str = 'bb0d4dc90537'
+down_revision: Union[str, Sequence[str], None] = '64d5e3550fb9'
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    """Upgrade schema."""
+    # ### commands auto generated by Alembic - please adjust! ###
+    op.drop_constraint(op.f('couples_user2_id_fkey'), 'couples', type_='foreignkey')
+    op.drop_constraint(op.f('couples_user1_id_fkey'), 'couples', type_='foreignkey')
+    op.create_foreign_key(None, 'couples', 'users', ['user1_id'], ['telegram_id'])
+    op.create_foreign_key(None, 'couples', 'users', ['user2_id'], ['telegram_id'])
+    # ### end Alembic commands ###
+
+
+def downgrade() -> None:
+    """Downgrade schema."""
+    # ### commands auto generated by Alembic - please adjust! ###
+    op.drop_constraint(None, 'couples', type_='foreignkey')
+    op.drop_constraint(None, 'couples', type_='foreignkey')
+    op.create_foreign_key(op.f('couples_user1_id_fkey'), 'couples', 'users', ['user1_id'], ['id'])
+    op.create_foreign_key(op.f('couples_user2_id_fkey'), 'couples', 'users', ['user2_id'], ['id'])
+    # ### end Alembic commands ###
+
+
+==================== FILE: alembic/versions/f96f0cc118cd_create_users_table.py ====================
+"""create_users_table
+
+Revision ID: f96f0cc118cd
+Revises: 
+Create Date: 2026-07-30 11:25:38.420659
+
+"""
+from typing import Sequence, Union
+
+from alembic import op
+import sqlalchemy as sa
+
+
+# revision identifiers, used by Alembic.
+revision: str = 'f96f0cc118cd'
+down_revision: Union[str, Sequence[str], None] = None
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    """Upgrade schema."""
+    # ### commands auto generated by Alembic - please adjust! ###
+    op.create_table('users',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('telegram_id', sa.BigInteger(), nullable=False),
+    sa.Column('username', sa.String(length=32), nullable=True),
+    sa.Column('first_name', sa.String(length=64), nullable=False),
+    sa.Column('last_name', sa.String(length=64), nullable=True),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_users_telegram_id'), 'users', ['telegram_id'], unique=True)
+    # ### end Alembic commands ###
+
+
+def downgrade() -> None:
+    """Downgrade schema."""
+    # ### commands auto generated by Alembic - please adjust! ###
+    op.drop_index(op.f('ix_users_telegram_id'), table_name='users')
+    op.drop_table('users')
+    # ### end Alembic commands ###
+
+
+==================== FILE: bot/bot.py ====================
+
+
+
+==================== FILE: bot/callbacks/main.py ====================
+from aiogram.filters.callback_data import CallbackData
+from typing import Literal
+
+
+class NavAction(CallbackData, prefix="nav"):
+    """Навигация по главному меню и общим экранам."""
+    action: Literal["back", "cancel_fsm"]
+
+
+class CoupleAction(CallbackData, prefix="couple"):
+    """Действия внутри экрана 'Пара'."""
+    action: Literal["create", "join", "leave_confirm", "leave_yes", "leave_no", "leave_final_yes", "leave_final_no"]
+
+
+class SettingsAction(CallbackData, prefix="settings"):
+    """Действия внутри экрана 'Настройки'."""
+    action: Literal["toggle_notifications", "set_timezone", "select_timezone", "other_timezone"]
+    timezone: str | None = None
+
+
+class LetterAction(CallbackData, prefix="letter"):
+    """Действия с капсулой времени."""
+    action: Literal["create", "select_date", "confirm", "cancel"]
+    days: int | None = None  # 7, 30, 365 или None для "Своя дата"
+
+
+class LetterDeliveryAction(CallbackData, prefix="delivery"):
+    """Действия с доставленным письмом"""
+    action: Literal["thanks", "reply"]
+    letter_id: int
+
+
+class LetterListAction(CallbackData, prefix="letter_list"):
+    """Действия с письмом из списка /letters"""
+    action: Literal["edit_text", "edit_date", "cancel_letter"]
+    letter_id: int
+
+
+==================== FILE: bot/handlers/__init__.py ====================
+from aiogram import Router
+
+from . import start
+from . import navigation
+from . import profile
+from . import settings
+from . import couple
+from . import letter
+
+# Создаем главный роутер, который включает в себя все остальные
+router = Router()
+
+router.include_router(start.router)
+router.include_router(navigation.router)
+router.include_router(profile.router)
+router.include_router(settings.router)
+router.include_router(couple.router)
+router.include_router(letter.router)
+
+
+==================== FILE: bot/handlers/couple.py ====================
+from aiogram import Router, F
+from aiogram.types import Message, CallbackQuery
+from aiogram.filters import Command, StateFilter
+from aiogram.fsm.context import FSMContext
+
+from bot.keyboards.main_kb import get_main_menu_kb
+from bot.keyboards.couple_kb import (
+    get_couple_main_kb, 
+    get_couple_in_pair_kb, 
+    get_couple_confirm_leave_kb,
+    get_couple_confirm_leave_final_kb,
+)
+from bot.keyboards.common_kb import get_cancel_fsm_kb
+from bot.callbacks.main import CoupleAction, NavAction, LetterAction
+from bot.states.couple import CoupleStates
+from bot.states.letter import LetterStates
+from bot.keyboards.letter_kb import get_letter_date_keyboard
+from services.couple_service import CoupleService
+from services.user_service import UserService
+
+from bot.utils.timezone_utils import to_local
+
+router = Router()
+
+
+@router.message(Command("couple"))
+async def cmd_couple(
+    message: Message,
+    user_service: UserService,
+    couple_service: CoupleService,
+) -> None:
+    user_id = message.from_user.id
+    couple = await couple_service.get_couple(user_id)
+    
+    if couple:
+        partner_id = couple.user2_id if couple.user1_id == user_id else couple.user1_id
+        partner = await user_service.get_profile(partner_id)
+        partner_name = (partner.first_name or partner.username or "твоим партнёром") if partner else "твоим партнёром"
+        
+        await message.answer(
+            f"Ты уже в паре с {partner_name} ❤️",
+            reply_markup=get_couple_in_pair_kb(),
+            parse_mode="HTML"
+        )
+        return
+    
+    await message.answer(
+        "Ты сейчас не в паре. Что хочешь сделать?",
+        reply_markup=get_couple_main_kb(),
+        parse_mode="HTML"
+    )
+
+
+@router.callback_query(CoupleAction.filter(F.action == "create"))
+async def cb_create_couple(
+    callback: CallbackQuery,
+    couple_service: CoupleService,
+    user_service: UserService,
+) -> None:
+    user_id = callback.from_user.id
+
+    try:
+        couple = await couple_service.create_couple(user_id)
+    except ValueError as e:
+        await callback.answer(str(e), show_alert=True)
+        return
+
+    user = await user_service.get_profile(user_id)
+    tz_name = user.timezone if user and user.timezone else "UTC"
+
+    expires_local = to_local(couple.invite_expires, tz_name)
+    expires_at = expires_local.strftime("%d.%m.%Y %H:%M")
+
+    await callback.message.answer(
+        f"🔑 Твой код приглашения:\n\n"
+        f"<b>{couple.invite_code}</b>\n\n"
+        f"Действует до {expires_at} (по твоему времени, 24 часа).\n"
+        f"Отправь его партнёру, чтобы он мог присоединиться.",
+        parse_mode="HTML"
+    )
+    await callback.answer()
+
+
+@router.callback_query(CoupleAction.filter(F.action == "join"))
+async def cb_join_couple(
+    callback: CallbackQuery,
+    state: FSMContext,
+    couple_service: CoupleService,
+) -> None:
+    user_id = callback.from_user.id
+    
+    existing = await couple_service.get_couple(user_id)
+    if existing:
+        await callback.answer("Сначала выйди из текущей пары", show_alert=True)
+        return
+
+    await state.set_state(CoupleStates.waiting_for_code)
+    await callback.message.answer(
+        "Введи код приглашения:",
+        reply_markup=get_cancel_fsm_kb(),
+        parse_mode="HTML"
+    )
+    await callback.answer()
+
+
+@router.message(CoupleStates.waiting_for_code, Command("couple"))
+async def cmd_couple_in_fsm(message: Message, state: FSMContext) -> None:
+    await state.clear()
+    await message.answer(
+        "Действие отменено. Теперь ты можешь создать пару или присоединиться к другой.",
+        parse_mode="HTML"
+    )
+
+
+@router.message(CoupleStates.waiting_for_code, F.text)
+async def process_join_code(
+    message: Message,
+    state: FSMContext,
+    couple_service: CoupleService,
+    user_service: UserService,
+) -> None:
+    if message.text.startswith('/'):
+        return
+    
+    user_id = message.from_user.id
+    code = message.text.strip().upper()
+
+    try:
+        couple = await couple_service.join_couple(user_id, code)
+    except ValueError as e:
+        if "уже в паре" in str(e):
+            await state.clear()
+        await message.answer(str(e), parse_mode="HTML")
+        return
+
+    await state.clear()
+    
+    user2 = await user_service.get_profile(user_id)
+    user1 = await user_service.get_profile(couple.user1_id)
+    
+    user2_name = user2.first_name or user2.username or "твоим партнёром"
+    user1_name = user1.first_name or user1.username or "твоим партнёром"
+    
+    await message.answer(
+        f"❤️ Вы теперь пара с {user1_name}!",
+        parse_mode="HTML"
+    )
+    
+    await message.bot.send_message(
+        chat_id=couple.user1_id,
+        text=f"❤️ {user2_name} присоединился к тебе! Вы теперь пара!",
+        parse_mode="HTML"
+    )
+
+
+@router.message(CoupleStates.waiting_for_code, ~F.text)
+async def process_non_text_in_fsm(message: Message) -> None:
+    await message.answer(
+        "Отправь код текстом.",
+        reply_markup=get_cancel_fsm_kb(),
+        parse_mode="HTML"
+    )
+
+
+@router.message(Command("cancel"), StateFilter("*"))
+async def cmd_cancel(message: Message, state: FSMContext) -> None:
+    await state.clear()
+    await message.answer(
+        "Действие отменено.",
+        reply_markup=get_main_menu_kb(),
+        parse_mode="HTML"
+    )
+
+
+@router.message(Command("leave"))
+async def cmd_leave(
+    message: Message,
+    couple_service: CoupleService,
+) -> None:
+    user_id = message.from_user.id
+    couple = await couple_service.get_couple(user_id)
+    
+    if not couple:
+        await message.answer("Ты не в паре.", parse_mode="HTML")
+        return
+        
+    await message.answer(
+        "Ты уверен, что хочешь выйти из пары?",
+        reply_markup=get_couple_confirm_leave_kb(),
+        parse_mode="HTML"
+    )
+
+
+@router.callback_query(CoupleAction.filter(F.action == "leave_confirm"))
+async def cb_confirm_leave(
+    callback: CallbackQuery,
+    couple_service: CoupleService,
+) -> None:
+    user_id = callback.from_user.id
+    
+    couple = await couple_service.get_couple(user_id)
+    if not couple:
+        await callback.answer("Ты не в паре.", show_alert=True)
+        return
+    
+    await callback.message.edit_text(
+        "Ты уверен, что хочешь выйти из пары?",
+        reply_markup=get_couple_confirm_leave_kb(),
+        parse_mode="HTML"
+    )
+    await callback.answer()
+
+
+@router.callback_query(CoupleAction.filter(F.action == "leave_yes"))
+async def cb_leave_yes(
+    callback: CallbackQuery,
+    couple_service: CoupleService,
+) -> None:
+    """Показывает второе (финальное) подтверждение выхода из пары"""
+    user_id = callback.from_user.id
+    
+    couple = await couple_service.get_couple(user_id)
+    if not couple:
+        await callback.answer("Ты не в паре.", show_alert=True)
+        return
+    
+    await callback.message.edit_text(
+        "Это необратимо. Все активные письма будут отменены.\n\n"
+        "Вы точно хотите расстаться?",
+        reply_markup=get_couple_confirm_leave_final_kb(),
+        parse_mode="HTML"
+    )
+    await callback.answer()
+
+
+@router.callback_query(CoupleAction.filter(F.action == "leave_final_yes"))
+async def cb_leave_final_yes(
+    callback: CallbackQuery,
+    couple_service: CoupleService,
+    user_service: UserService,
+    state: FSMContext,
+) -> None:
+    """Финальное подтверждение выхода из пары — выполняет разрыв"""
+    user_id = callback.from_user.id
+    
+    couple = await couple_service.get_couple(user_id)
+    if not couple:
+        await callback.answer("Ты не в паре.", show_alert=True)
+        return
+    
+    partner_id = couple.user2_id if couple.user1_id == user_id else couple.user1_id
+    
+    try:
+        await couple_service.leave_couple(user_id)
+        await state.clear()
+        
+        await callback.message.edit_text("Ты вышел из пары. 😔", parse_mode="HTML")
+        
+        user = await user_service.get_profile(user_id)
+        user_name = user.first_name or user.username or "Твой партнёр"
+        
+        await callback.message.bot.send_message(
+            chat_id=partner_id,
+            text=f"😔 {user_name} вышел из пары.",
+            parse_mode="HTML"
+        )
+    except ValueError:
+        await callback.answer("Ты не в паре.", show_alert=True)
+
+
+@router.callback_query(CoupleAction.filter(F.action == "leave_no"))
+async def cb_leave_no(callback: CallbackQuery) -> None:
+    """Отмена на первом этапе подтверждения"""
+    await callback.message.edit_text("Хорошо, остаёмся вместе! ❤️", parse_mode="HTML")
+    await callback.answer()
+
+
+@router.callback_query(CoupleAction.filter(F.action == "leave_final_no"))
+async def cb_leave_final_no(callback: CallbackQuery) -> None:
+    """Отмена на втором (финальном) этапе подтверждения"""
+    await callback.message.edit_text("Хорошо, остаёмся вместе! ❤️", parse_mode="HTML")
+    await callback.answer()
+
+
+@router.callback_query(LetterAction.filter(F.action == "create"))
+async def cb_create_letter(
+    callback: CallbackQuery,
+    state: FSMContext,
+    couple_service: CoupleService,
+) -> None:
+    user_id = callback.from_user.id
+    
+    couple = await couple_service.get_couple(user_id)
+    if not couple:
+        await callback.answer("Сначала создай пару 💑", show_alert=True)
+        return
+    
+    await state.set_state(LetterStates.choosing_date)
+    await state.update_data(couple_id=couple.id)
+    
+    await callback.message.edit_text(
+        "💌 <b>Капсула времени</b>\n\n"
+        "Выбери, когда твоё письмо будет открыто:",
+        reply_markup=get_letter_date_keyboard(),
+        parse_mode="HTML"
+    )
+    await callback.answer()
+
+
+==================== FILE: bot/handlers/letter.py ====================
+from datetime import datetime, timedelta, timezone
+
+from aiogram import Router, F
+from aiogram.types import CallbackQuery, Message
+from aiogram.filters import Command, StateFilter
+from aiogram.fsm.context import FSMContext
+from aiogram.exceptions import TelegramBadRequest
+
+from bot.callbacks.main import LetterAction, LetterDeliveryAction
+from bot.keyboards.letter_kb import get_letter_date_keyboard, get_letter_confirm_keyboard
+from bot.keyboards.common_kb import get_cancel_fsm_kb
+from bot.states.letter import LetterStates
+from bot.utils.timezone_utils import to_utc, to_local
+from services.couple_service import CoupleService
+from services.letter_service import LetterService
+from services.user_service import UserService
+
+import logging
+
+logger = logging.getLogger(__name__)
+
+router = Router()
+
+
+# ==========================================
+# ХЕНДЛЕРЫ ДЛЯ КНОПОК ДОСТАВКИ (ПЕРВЫМИ!)
+# ==========================================
+
+@router.callback_query(LetterDeliveryAction.filter(F.action == "thanks"))
+async def cb_delivery_thanks(
+    callback: CallbackQuery,
+    callback_data: LetterDeliveryAction,
+    user_service: UserService,
+    letter_service: LetterService,
+) -> None:
+    """Обработка кнопки [❤️ Спасибо]"""
+    letter_id = callback_data.letter_id
+    user_id = callback.from_user.id
+    
+    letter = await letter_service.get_letter_by_id(letter_id)
+    if not letter:
+        await callback.answer("Письмо не найдено", show_alert=True)
+        return
+    
+    user = await user_service.get_profile(telegram_id=user_id)
+    user_name = (user.first_name or user.username or "Твой партнер") if user else "Твой партнер"
+    
+    try:
+        await callback.message.bot.send_message(
+            chat_id=letter.sender_id,
+            text=f"❤️ {user_name} получил(а) твоё письмо и отправил(а) ❤️",
+            parse_mode="HTML"
+        )
+    except TelegramBadRequest as e:
+        logger.warning(f"Не удалось уведомить отправителя {letter.sender_id}: {e}")
+    
+    await callback.message.edit_reply_markup(reply_markup=None)
+    await callback.answer("❤️ Спасибо отправлено!")
+
+
+@router.callback_query(LetterDeliveryAction.filter(F.action == "reply"))
+async def cb_delivery_reply(
+    callback: CallbackQuery,
+    state: FSMContext,
+    couple_service: CoupleService,
+) -> None:
+    """Обработка кнопки [💌 Ответить] — запуск FSM создания письма"""
+    user_id = callback.from_user.id
+    
+    couple = await couple_service.get_couple(user_id)
+    if not couple:
+        await callback.answer("Сначала создай пару 💑", show_alert=True)
+        return
+    
+    await state.set_state(LetterStates.choosing_date)
+    await state.update_data(couple_id=couple.id)
+    
+    await callback.message.edit_text(
+        "💌 <b>Капсула времени</b>\n\n"
+        "Выбери, когда твоё письмо будет открыто:",
+        reply_markup=get_letter_date_keyboard(),
+        parse_mode="HTML"
+    )
+    await callback.answer()
+
+
+# ==========================================
+# ОСТАЛЬНЫЕ ХЕНДЛЕРЫ
+# ==========================================
+
+@router.callback_query(LetterAction.filter(F.action == "select_date"), LetterStates.choosing_date)
+async def cb_select_date(
+    callback: CallbackQuery,
+    state: FSMContext,
+    user_service: UserService,
+) -> None:
+    callback_data = LetterAction.unpack(callback.data)
+    days = callback_data.days
+    
+    user = await user_service.get_profile(telegram_id=callback.from_user.id)
+    user_tz = user.timezone if user else "UTC"
+    
+    if days is None:
+        await state.set_state(LetterStates.entering_date)
+        await callback.message.edit_text(
+            "🗓 Введи <b>дату</b> открытия в формате <b>ДД.ММ.ГГГГ</b>\n\n"
+            "Например: 01.01.2026",
+            reply_markup=get_cancel_fsm_kb(),
+            parse_mode="HTML"
+        )
+        await callback.answer()
+        return
+    
+    now_local = to_local(datetime.now(timezone.utc), user_tz)
+    open_date_local = now_local + timedelta(days=days)
+    open_date_utc = to_utc(open_date_local, user_tz)
+    
+    await state.update_data(open_date=open_date_utc.isoformat())
+    
+    await state.set_state(LetterStates.entering_text)
+    await callback.message.edit_text(
+        f"📅 Письмо будет открыто через {days} дней "
+        f"({open_date_local.strftime('%d.%m.%Y в %H:%M')})\n\n"
+        "Теперь напиши текст письма:",
+        reply_markup=get_cancel_fsm_kb(),
+        parse_mode="HTML"
+    )
+    await callback.answer()
+
+
+@router.message(LetterStates.entering_date, F.text.regexp(r"^\d{2}\.\d{2}\.\d{4}$"))
+async def process_entering_date(message: Message, state: FSMContext) -> None:
+    try:
+        datetime.strptime(message.text.strip(), "%d.%m.%Y")
+        await state.update_data(date_str=message.text.strip())
+        await state.set_state(LetterStates.entering_time)
+        await message.answer(
+            "⏰ Теперь введи <b>время</b> в формате <b>ЧЧ:ММ</b>\n\n"
+            "<i>Формат 24 часа.</i>\n"
+            "Например: 12:00",
+            reply_markup=get_cancel_fsm_kb(),
+            parse_mode="HTML"
+        )
+    except ValueError:
+        await message.answer(
+            "Неверная дата. Используй формат <b>ДД.ММ.ГГГГ</b>", 
+            reply_markup=get_cancel_fsm_kb(),
+            parse_mode="HTML"
+        )
+
+
+@router.message(LetterStates.entering_date, ~F.text)
+async def process_non_text_date(message: Message) -> None:
+    await message.answer(
+        "Отправь дату текстом в формате ДД.ММ.ГГГГ",
+        reply_markup=get_cancel_fsm_kb()
+    )
+
+
+@router.message(LetterStates.entering_time, F.text.regexp(r"^\d{2}:\d{2}$"))
+async def process_entering_time(
+    message: Message, 
+    state: FSMContext,
+    user_service: UserService,
+) -> None:
+    data = await state.get_data()
+    date_str = data.get("date_str")
+    time_str = message.text.strip()
+    
+    user = await user_service.get_profile(telegram_id=message.from_user.id)
+    user_tz = user.timezone if user else "UTC"
+    
+    try:
+        dt_str = f"{date_str} {time_str}"
+        date_obj = datetime.strptime(dt_str, "%d.%m.%Y %H:%M")
+        open_date_utc = to_utc(date_obj, user_tz)
+        
+        if open_date_utc <= datetime.now(timezone.utc):
+            await message.answer(
+                "⏳ Дата и время должны быть в будущем. Попробуй указать время позже.",
+                reply_markup=get_cancel_fsm_kb()
+            )
+            return
+        
+        await state.update_data(open_date=open_date_utc.isoformat())
+        await state.set_state(LetterStates.entering_text)
+        
+        open_date_local = to_local(open_date_utc, user_tz)
+        
+        await message.answer(
+            f"📅 Письмо будет открыто <b>{open_date_local.strftime('%d.%m.%Y в %H:%M')}</b>\n\n"
+            "Теперь напиши текст письма:",
+            reply_markup=get_cancel_fsm_kb(),
+            parse_mode="HTML"
+        )
+    except ValueError:
+        await message.answer(
+            "Неверное время. Используй формат <b>ЧЧ:ММ</b> (24 часа)", 
+            reply_markup=get_cancel_fsm_kb(),
+            parse_mode="HTML"
+        )
+
+
+@router.message(LetterStates.entering_time, ~F.text)
+async def process_non_text_time(message: Message) -> None:
+    await message.answer(
+        "Отправь время текстом в формате ЧЧ:ММ",
+        reply_markup=get_cancel_fsm_kb()
+    )
+
+
+@router.message(LetterStates.entering_text, F.text)
+async def process_letter_text(
+    message: Message,
+    state: FSMContext,
+    user_service: UserService,
+) -> None:
+    text = message.text.strip()
+    
+    if not text:
+        await message.answer("Напиши что-нибудь ❤️", reply_markup=get_cancel_fsm_kb())
+        return
+    
+    if len(text) > 4096:
+        await message.answer(
+            f"Слишком длинно. Максимум 4096 символов. Сейчас: {len(text)}",
+            reply_markup=get_cancel_fsm_kb()
+        )
+        return
+    
+    await state.update_data(text=text)
+    await state.set_state(LetterStates.confirming)
+    
+    data = await state.get_data()
+    open_date_str = data.get("open_date")
+    
+    if not open_date_str:
+        await message.answer(
+            "Ошибка данных. Начни создание письма заново", 
+            reply_markup=get_letter_date_keyboard()
+        )
+        await state.set_state(LetterStates.choosing_date)
+        return
+    
+    open_date_utc = datetime.fromisoformat(open_date_str)
+    
+    user = await user_service.get_profile(telegram_id=message.from_user.id)
+    user_tz = user.timezone if user else "UTC"
+    open_date_local = to_local(open_date_utc, user_tz)
+    
+    await message.answer(
+        f"💌 <b>Подтверждение</b>\n\n"
+        f"Дата и время открытия: <b>{open_date_local.strftime('%d.%m.%Y в %H:%M')}</b>\n"
+        f"Текст письма:\n\n"
+        f"<i>{text}</i>\n\n"
+        f"Письмо будет доставлено в указанное время.",
+        reply_markup=get_letter_confirm_keyboard(),
+        parse_mode="HTML"
+    )
+
+
+@router.message(LetterStates.entering_text, ~F.text)
+async def process_non_text(message: Message) -> None:
+    await message.answer(
+        "Отправь текст письма",
+        reply_markup=get_cancel_fsm_kb()
+    )
+
+
+@router.callback_query(LetterAction.filter(F.action == "confirm"), LetterStates.confirming)
+async def cb_confirm_letter(
+    callback: CallbackQuery,
+    state: FSMContext,
+    couple_service: CoupleService,
+    letter_service: LetterService,
+    user_service: UserService,
+) -> None:
+    user_id = callback.from_user.id
+    data = await state.get_data()
+    text = data.get("text")
+    open_date_str = data.get("open_date")
+    
+    if not text or not open_date_str:
+        await callback.answer("Ошибка данных. Начни сначала", show_alert=True)
+        await state.clear()
+        return
+    
+    open_date_utc = datetime.fromisoformat(open_date_str)
+    
+    couple = await couple_service.get_couple(user_id)
+    if not couple:
+        await callback.answer("Ты не в паре", show_alert=True)
+        await state.clear()
+        return
+    
+    receiver_id = couple.user2_id if couple.user1_id == user_id else couple.user1_id
+    
+    await letter_service.create_letter(
+        couple_id=couple.id,
+        sender_id=user_id,
+        receiver_id=receiver_id,
+        text=text,
+        open_date=open_date_utc
+    )
+    
+    await state.clear()
+    
+    user = await user_service.get_profile(telegram_id=user_id)
+    user_tz = user.timezone if user else "UTC"
+    open_date_local = to_local(open_date_utc, user_tz)
+    
+    await callback.message.edit_text(
+        "💌 Письмо запечатано!\n\n"
+        f"Оно будет доставлено {open_date_local.strftime('%d.%m.%Y в %H:%M')}.",
+        parse_mode="HTML"
+    )
+    await callback.answer()
+
+
+@router.callback_query(LetterAction.filter(F.action == "cancel"))
+async def cb_cancel_letter(callback: CallbackQuery, state: FSMContext) -> None:
+    await state.clear()
+    await callback.message.edit_text("Создание письма отменено", parse_mode="HTML")
+    await callback.answer()
+
+
+@router.message(Command("cancel"), StateFilter(LetterStates))
+async def cmd_cancel_letter(message: Message, state: FSMContext) -> None:
+    await state.clear()
+    await message.answer("Создание письма отменено", parse_mode="HTML")
+
+
+@router.message(Command("letters"))
+async def cmd_show_letters(
+    message: Message,
+    letter_service: LetterService,
+    couple_service: CoupleService,
+    user_service: UserService,
+) -> None:
+    """Показывает все активные письма в виде красивого списка"""
+    user_id = message.from_user.id
+    
+    couple = await couple_service.get_couple(user_id)
+    if not couple:
+        await message.answer("Ты не в паре. Сначала создай пару 💑", parse_mode="HTML")
+        return
+    
+    user = await user_service.get_profile(telegram_id=user_id)
+    user_tz = user.timezone if user else "UTC"
+    
+    letters = await letter_service.get_active_letters(user_id)
+    
+    if not letters:
+        await message.answer(
+            "У тебя нет активных писем 💌\n\n"
+            "Создай первое письмо через меню пары!",
+            parse_mode="HTML"
+        )
+        return
+    
+    lines = ["💌 <b>Твои активные письма:</b>\n"]
+    
+    for i, letter in enumerate(letters, 1):
+        open_date_local = to_local(letter.open_date, user_tz)
+        date_str = open_date_local.strftime('%d.%m.%Y в %H:%M')
+        
+        preview = letter.text[:100]
+        if len(letter.text) > 100:
+            preview += "..."
+        
+        lines.append(
+            f"<b>{i}.</b> 📅 {date_str}\n"
+            f"<i>{preview}</i>\n"
+        )
+    
+    lines.append("\n<i>Письма нельзя изменить после создания.</i>")
+    
+    await message.answer("\n".join(lines), parse_mode="HTML")
+
+
+==================== FILE: bot/handlers/navigation.py ====================
+from aiogram import Router, F
+from aiogram.types import Message, CallbackQuery
+from aiogram.fsm.context import FSMContext
+
+from bot.handlers.profile import cmd_profile
+from bot.handlers.couple import cmd_couple
+from bot.handlers.settings import cmd_settings
+from bot.utils.navigation import back_to_main_menu
+from bot.callbacks.main import NavAction
+from services.user_service import UserService
+from services.couple_service import CoupleService
+
+router = Router()
+
+
+@router.message(F.text == "👤 Профиль")
+async def nav_profile(
+    message: Message,
+    user_service: UserService,
+    couple_service: CoupleService,
+) -> None:
+    """Навигация: показывает профиль."""
+    await cmd_profile(message, user_service, couple_service)
+
+
+@router.message(F.text == "💑 Пара")
+async def nav_couple(
+    message: Message,
+    user_service: UserService,
+    couple_service: CoupleService,
+) -> None:
+    """Навигация: показывает экран пары."""
+    await cmd_couple(message, user_service, couple_service)
+
+
+@router.message(F.text == "⚙️ Настройки")
+async def nav_settings(
+    message: Message,
+    user_service: UserService,
+) -> None:
+    """Навигация: показывает настройки."""
+    await cmd_settings(message, user_service)
+
+
+@router.callback_query(NavAction.filter(F.action == "back"))
+async def cb_back(
+    callback: CallbackQuery,
+    state: FSMContext
+) -> None:
+    """
+    Универсальная кнопка 'Назад'.
+    Делегирует всю логику очистки и возврата в navigation.py
+    """
+    await back_to_main_menu(callback, state)
+
+
+@router.callback_query(NavAction.filter(F.action == "cancel_fsm"))
+async def cb_cancel_fsm(
+    callback: CallbackQuery,
+    state: FSMContext
+) -> None:
+    """
+    Универсальная отмена FSM-процесса.
+    Сбрасывает состояние и возвращает в главное меню.
+    """
+    await back_to_main_menu(callback, state)
+
+
+==================== FILE: bot/handlers/profile.py ====================
+from aiogram import Router
+from aiogram.filters import Command
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
+
+from services.user_service import UserService
+from services.couple_service import CoupleService
+from bot.utils.timezone_utils import to_local
+from bot.callbacks.main import NavAction
+
+router = Router()
+
+
+@router.message(Command("profile"))
+async def cmd_profile(
+    message: Message,
+    user_service: UserService,
+    couple_service: CoupleService,
+) -> None:
+    """Показывает профиль пользователя."""
+    user_id = message.from_user.id
+    user = await user_service.get_profile(telegram_id=user_id)
+    
+    if not user:
+        await message.answer("❌ Профиль не найден. Пожалуйста, отправь /start для регистрации.")
+        return
+
+    couple = await couple_service.get_couple(user_id=user_id)
+
+    notifications_status = "✅ Включены" if user.notifications else "❌ Выключены"
+    
+    # Конвертируем дату регистрации из UTC в локальное время пользователя
+    local_created_at = to_local(user.created_at, user.timezone)
+    
+    text = (
+        f"👤 <b>Твой профиль</b>\n\n"
+        f"<b>Имя:</b> {user.first_name}\n"
+        f"<b>Username:</b> {user.username or 'не указан'}\n"
+        f"<b>Часовой пояс:</b> 🌍 {user.timezone}\n"
+        f"<b>Уведомления:</b> {notifications_status}\n\n"
+        f"<b>Дата регистрации:</b> {local_created_at.strftime('%d.%m.%Y')}"
+    )
+
+    if couple:
+        partner_id = couple.user2_id if couple.user1_id == user_id else couple.user1_id
+        partner = await user_service.get_profile(partner_id)
+        partner_name = (partner.first_name or partner.username or "Неизвестно") if partner else "Неизвестно"
+        
+        # Конвертируем дату активации пары в локальное время пользователя
+        local_activated_at = to_local(couple.activated_at, user.timezone) if couple.activated_at else None
+        date_str = local_activated_at.strftime("%d.%m.%Y") if local_activated_at else "Неизвестно"
+
+        text += (
+            f"\n\n💑 <b>В паре с:</b> {partner_name}\n"
+            f" <b>Вместе с:</b> {date_str}"
+        )
+    else:
+        text += "\n\n💔 <b>Статус:</b> Не в паре"
+
+    # Создаем inline-клавиатуру с кнопкой "Назад"
+    back_kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="🔙 Назад", callback_data=NavAction(action="back").pack())]
+        ]
+    )
+
+    await message.answer(text, parse_mode="HTML", reply_markup=back_kb)
+
+
+==================== FILE: bot/handlers/settings.py ====================
+from aiogram import Router, F
+from aiogram.filters import Command
+from aiogram.fsm.context import FSMContext
+from aiogram.types import Message, CallbackQuery
+
+from services.user_service import UserService
+from bot.keyboards.settings_kb import get_settings_keyboard, get_timezone_keyboard
+from bot.keyboards.common_kb import get_cancel_fsm_kb
+from bot.callbacks.main import SettingsAction
+from bot.states.settings import SettingsStates
+
+router = Router()
+
+
+@router.message(Command("settings"))
+async def cmd_settings(message: Message, user_service: UserService) -> None:
+    user = await user_service.get_profile(telegram_id=message.from_user.id)
+    
+    if not user:
+        await message.answer("❌ Профиль не найден. Пожалуйста, отправь /start для регистрации.")
+        return
+
+    keyboard = get_settings_keyboard(user.notifications, user.timezone or "UTC")
+    
+    text = (
+        f"⚙️ <b>Настройки</b>\n\n"
+        f"Здесь ты можешь управлять своими предпочтениями."
+    )
+
+    await message.answer(text, parse_mode="HTML", reply_markup=keyboard)
+
+
+@router.callback_query(SettingsAction.filter(F.action == "toggle_notifications"))
+async def toggle_notifications(callback: CallbackQuery, user_service: UserService) -> None:
+    user = await user_service.get_profile(telegram_id=callback.from_user.id)
+    
+    if not user:
+        await callback.answer("❌ Профиль не найден", show_alert=True)
+        return
+
+    new_status = not user.notifications
+    
+    await user_service.update_settings(
+        telegram_id=callback.from_user.id,
+        notifications=new_status
+    )
+
+    keyboard = get_settings_keyboard(new_status, user.timezone or "UTC")
+    await callback.message.edit_reply_markup(reply_markup=keyboard)
+    
+    status_text = "включены ✅" if new_status else "выключены ❌"
+    await callback.answer(f"Уведомления {status_text}")
+
+
+@router.callback_query(SettingsAction.filter(F.action == "set_timezone"))
+async def show_timezone_menu(callback: CallbackQuery) -> None:
+    keyboard = get_timezone_keyboard()
+    await callback.message.edit_text(
+        text="🌍 <b>Выбор часового пояса</b>\n\nВыбери популярный пояс или введи свой:",
+        parse_mode="HTML",
+        reply_markup=keyboard
+    )
+    await callback.answer()
+
+
+@router.callback_query(SettingsAction.filter(F.action == "select_timezone"))
+async def select_timezone(callback: CallbackQuery, callback_data: SettingsAction, user_service: UserService) -> None:
+    tz = callback_data.timezone
+    try:
+        await user_service.update_settings(telegram_id=callback.from_user.id, timezone=tz)
+        await callback.answer(f"✅ Пояс {tz} установлен!", show_alert=True)
+    except ValueError:
+        await callback.answer("❌ Ошибка валидации пояса", show_alert=True)
+        return
+
+    user = await user_service.get_profile(telegram_id=callback.from_user.id)
+    keyboard = get_settings_keyboard(user.notifications, user.timezone or "UTC")
+    await callback.message.edit_text(
+        text="⚙️ <b>Настройки</b>\n\nЗдесь ты можешь управлять своими предпочтениями.",
+        parse_mode="HTML",
+        reply_markup=keyboard
+    )
+
+
+@router.callback_query(SettingsAction.filter(F.action == "other_timezone"))
+async def ask_for_custom_timezone(callback: CallbackQuery, state: FSMContext) -> None:
+    await callback.message.edit_text(
+        text="✏️ Введи название часового пояса (например, <code>Europe/Berlin</code> или <code>Asia/Tokyo</code>).",
+        reply_markup=get_cancel_fsm_kb(),  # <-- ДОБАВЛЕНО
+        parse_mode="HTML"
+    )
+    await state.set_state(SettingsStates.waiting_for_timezone)
+    await callback.answer()
+
+
+@router.message(SettingsStates.waiting_for_timezone)
+async def process_custom_timezone(message: Message, state: FSMContext, user_service: UserService) -> None:
+    tz_input = message.text.strip()
+    
+    try:
+        await user_service.update_settings(telegram_id=message.from_user.id, timezone=tz_input)
+    except ValueError:
+        await message.answer(
+            "❌ Неверный формат часового пояса. Попробуй еще раз (например, <code>Europe/Paris</code>).",
+            reply_markup=get_cancel_fsm_kb(),  # <-- ДОБАВЛЕНО
+            parse_mode="HTML"
+        )
+        return
+
+    await state.clear()
+    
+    user = await user_service.get_profile(telegram_id=message.from_user.id)
+    keyboard = get_settings_keyboard(user.notifications, user.timezone or "UTC")
+    
+    await message.answer(
+        text=f"✅ Часовой пояс <b>{tz_input}</b> успешно установлен!\n\n"
+             f"⚙️ <b>Настройки</b>\n\nЗдесь ты можешь управлять своими предпочтениями.",
+        parse_mode="HTML",
+        reply_markup=keyboard
+    )
+
+
+==================== FILE: bot/handlers/start.py ====================
+from aiogram import Router
+from aiogram.filters import CommandStart
+from aiogram.types import Message
+
+from services.user_service import UserService
+from services.couple_service import CoupleService
+from bot.keyboards.main_kb import get_main_menu_kb
+
+router = Router()
+
+
+@router.message(CommandStart())
+async def cmd_start(
+    message: Message, 
+    user_service: UserService,
+    couple_service: CoupleService
+) -> None:
+    telegram_id = message.from_user.id
+    
+    # 1. Получаем или создаем пользователя (UPSERT)
+    user = await user_service.get_or_create_user(
+        telegram_id=telegram_id,
+        first_name=message.from_user.first_name,
+        username=message.from_user.username,
+        last_name=message.from_user.last_name,
+    )
+
+    # 2. Проверяем наличие пары (используем твой существующий метод get_couple)
+    couple = await couple_service.get_couple(telegram_id)
+
+    # 3. Формируем текст приветствия
+    text = f"Привет, <b>{user.first_name}</b>! 👋\n\nДобро пожаловать в «Пространство любви»!\n"
+    
+    if couple:
+        # Определяем telegram_id партнёра
+        partner_tg_id = couple.user2_id if couple.user1_id == telegram_id else couple.user1_id
+        
+        # Получаем профиль партнёра
+        partner = await user_service.get_profile(partner_tg_id)
+        partner_name = (partner.first_name or partner.username or "Партнёр") if partner else "Партнёр"
+        
+        text += f"Ты уже в паре с {partner_name}. 🥰\nИспользуй меню ниже."
+    else:
+        text += "Я помогу тебе создать или найти пару.\nИспользуй меню ниже."
+
+    # 4. Отправляем сообщение с reply-клавиатурой
+    await message.answer(
+        text, 
+        parse_mode="HTML",
+        reply_markup=get_main_menu_kb()
+    )
+
+
+==================== FILE: bot/keyboards/__init__.py ====================
+
+
+
+==================== FILE: bot/keyboards/common_kb.py ====================
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+
+from bot.callbacks.main import NavAction
+
+
+def get_cancel_fsm_kb() -> InlineKeyboardMarkup:
+    """
+    Возвращает inline-клавиатуру с одной кнопкой [❌ Отмена].
+    Используется во всех FSM-состояниях.
+    """
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="❌ Отмена", callback_data=NavAction(action="cancel_fsm").pack())]
+        ]
+    )
+
+
+==================== FILE: bot/keyboards/couple_kb.py ====================
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+
+from bot.callbacks.main import CoupleAction, NavAction, LetterAction
+
+
+def get_couple_main_kb() -> InlineKeyboardMarkup:
+    """Клавиатура для пользователя, который НЕ в паре."""
+    buttons = [
+        [
+            InlineKeyboardButton(
+                text="🔑 Создать",
+                callback_data=CoupleAction(action="create").pack()
+            ),
+            InlineKeyboardButton(
+                text="🔗 Присоединиться",
+                callback_data=CoupleAction(action="join").pack()
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="🔙 Назад",
+                callback_data=NavAction(action="back").pack()
+            )
+        ]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+def get_couple_in_pair_kb() -> InlineKeyboardMarkup:
+    """Клавиатура для пользователя, который УЖЕ в паре."""
+    buttons = [
+        [
+            InlineKeyboardButton(
+                text="💌 Капсула времени",
+                callback_data=LetterAction(action="create").pack()  # <-- НОВАЯ КНОПКА
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="💔 Выйти из пары",
+                callback_data=CoupleAction(action="leave_confirm").pack()
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="🔙 Назад",
+                callback_data=NavAction(action="back").pack()
+            )
+        ]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+def get_couple_confirm_leave_kb() -> InlineKeyboardMarkup:
+    """Клавиатура подтверждения выхода из пары."""
+    buttons = [
+        [
+            InlineKeyboardButton(
+                text="✅ Да, выйти",
+                callback_data=CoupleAction(action="leave_yes").pack()
+            ),
+            InlineKeyboardButton(
+                text="❌ Нет, остаться",
+                callback_data=CoupleAction(action="leave_no").pack()
+            )
+        ]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+def get_couple_confirm_leave_final_kb() -> InlineKeyboardMarkup:
+    """Клавиатура финального подтверждения выхода из пары."""
+    buttons = [
+        [
+            InlineKeyboardButton(
+                text="💔 Да, расстаться",
+                callback_data=CoupleAction(action="leave_final_yes").pack()
+            ),
+            InlineKeyboardButton(
+                text="Нет, я передумал",
+                callback_data=CoupleAction(action="leave_final_no").pack()
+            )
+        ]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+==================== FILE: bot/keyboards/letter_delivery_kb.py ====================
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+
+from bot.callbacks.main import LetterDeliveryAction
+
+
+def get_letter_delivery_kb(letter_id: int) -> InlineKeyboardMarkup:
+    """
+    Возвращает inline-клавиатуру для доставленного письма.
+    Кнопки: [❤️ Спасибо] [💌 Ответить]
+    """
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="❤️ Спасибо",
+                    callback_data=LetterDeliveryAction(action="thanks", letter_id=letter_id).pack()
+                ),
+                InlineKeyboardButton(
+                    text="💌 Ответить",
+                    callback_data=LetterDeliveryAction(action="reply", letter_id=letter_id).pack()
+                ),
+            ]
+        ]
+    )
+
+
+==================== FILE: bot/keyboards/letter_kb.py ====================
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+
+from bot.callbacks.main import LetterAction
+
+
+def get_letter_date_keyboard() -> InlineKeyboardMarkup:
+    """Клавиатура выбора даты открытия письма."""
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="📅 Через неделю",
+                    callback_data=LetterAction(action="select_date", days=7).pack()
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text="📅 Через месяц",
+                    callback_data=LetterAction(action="select_date", days=30).pack()
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text="📅 Через год",
+                    callback_data=LetterAction(action="select_date", days=365).pack()
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text="🗓 Своя дата",
+                    callback_data=LetterAction(action="select_date", days=None).pack()
+                )
+            ],
+        ]
+    )
+
+
+def get_letter_confirm_keyboard() -> InlineKeyboardMarkup:
+    """Клавиатура подтверждения отправки письма."""
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="✅ Отправить",
+                    callback_data=LetterAction(action="confirm").pack()
+                ),
+                InlineKeyboardButton(
+                    text="❌ Отмена",
+                    callback_data=LetterAction(action="cancel").pack()
+                )
+            ]
+        ]
+    )
+
+
+==================== FILE: bot/keyboards/main_kb.py ====================
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+
+
+def get_main_menu_kb() -> ReplyKeyboardMarkup:
+    """
+    Возвращает постоянную reply-клавиатуру главного меню.
+    """
+    buttons = [
+        [KeyboardButton(text="👤 Профиль"), KeyboardButton(text="💑 Пара")],
+        [KeyboardButton(text="⚙️ Настройки")]
+    ]
+    
+    return ReplyKeyboardMarkup(
+        keyboard=buttons,
+        resize_keyboard=True,
+        input_field_placeholder="Выберите раздел..."
+    )
+
+
+==================== FILE: bot/keyboards/settings_kb.py ====================
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+
+from bot.callbacks.main import SettingsAction, NavAction
+from bot.utils.timezone_utils import get_common_timezones
+
+
+def get_settings_keyboard(notifications_enabled: bool, current_timezone: str = "UTC") -> InlineKeyboardMarkup:
+    """
+    Возвращает inline-клавиатуру с настройками.
+    Кнопки переключения уведомлений и выбора часового пояса показывают текущее состояние.
+    """
+    if notifications_enabled:
+        btn_text = "Уведомления: вкл ✅"
+    else:
+        btn_text = "Уведомления: выкл ❌"
+
+    keyboard = [
+        [InlineKeyboardButton(
+            text=f"🌍 Часовой пояс: {current_timezone}",
+            callback_data=SettingsAction(action="set_timezone").pack()
+        )],
+        [InlineKeyboardButton(
+            text=btn_text,
+            callback_data=SettingsAction(action="toggle_notifications").pack()
+        )],
+        [InlineKeyboardButton(
+            text="🔙 Назад",
+            callback_data=NavAction(action="back").pack()
+        )]
+    ]
+    
+    return InlineKeyboardMarkup(inline_keyboard=keyboard)
+
+
+def get_timezone_keyboard() -> InlineKeyboardMarkup:
+    """Возвращает клавиатуру для выбора часового пояса из списка популярных."""
+    buttons = []
+    
+    # Кнопки с популярными поясами
+    for tz in get_common_timezones():
+        buttons.append([InlineKeyboardButton(
+            text=tz,
+            callback_data=SettingsAction(action="select_timezone", timezone=tz).pack()
+        )])
+    
+    # Кнопка для ввода произвольного пояса
+    buttons.append([InlineKeyboardButton(
+        text="✏️ Ввести другой",
+        callback_data=SettingsAction(action="other_timezone").pack()
+    )])
+    
+    # Кнопка возврата в настройки
+    buttons.append([InlineKeyboardButton(
+        text="🔙 Назад",
+        callback_data=NavAction(action="back").pack()
+    )])
+    
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+==================== FILE: bot/middlewares/__init__.py ====================
+
+
+
+==================== FILE: bot/middlewares/db.py ====================
+from typing import Any, Awaitable, Callable, Dict
+
+from aiogram import BaseMiddleware
+from aiogram.types import TelegramObject
+from sqlalchemy.ext.asyncio import async_sessionmaker
+
+from database.repositories.user import UserRepository
+from database.repositories.couple import CoupleRepository
+from database.repositories.letter import LetterRepository
+from services.user_service import UserService
+from services.couple_service import CoupleService
+from services.letter_service import LetterService
+
+
+class DbSessionMiddleware(BaseMiddleware):
+    """Middleware для управления сессиями БД и проброса сервисов в хэндлеры."""
+
+    def __init__(self, session_pool: async_sessionmaker) -> None:
+        super().__init__()
+        self.session_pool = session_pool
+
+    async def __call__(  # <-- ПРОВЕРЬ: здесь ровно по два подчеркивания с каждой стороны
+        self,
+        handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
+        event: TelegramObject,
+        data: Dict[str, Any],
+    ) -> Any:
+        async with self.session_pool() as session:
+            # Создаем репозитории
+            user_repo = UserRepository(session)
+            couple_repo = CoupleRepository(session)
+            letter_repo = LetterRepository(session)
+            
+            # Получаем bot из data (aiogram добавляет его автоматически)
+            bot = data["bot"]
+            
+            # Создаем сервисы с внедренными зависимостями
+            user_service = UserService(user_repo)
+            letter_service = LetterService(letter_repo, user_repo, bot)
+            couple_service = CoupleService(couple_repo, letter_service, bot)
+            
+            # Пробрасываем сессию и сервисы в data
+            data["session"] = session
+            data["user_repo"] = user_repo
+            data["user_service"] = user_service
+            data["couple_repo"] = couple_repo
+            data["couple_service"] = couple_service
+            data["letter_service"] = letter_service
+
+            try:
+                result = await handler(event, data)
+                await session.commit()
+                return result
+            except Exception:
+                await session.rollback()
+                raise
+
+
+==================== FILE: bot/states/couple.py ====================
+from aiogram.fsm.state import State, StatesGroup
+
+
+class CoupleStates(StatesGroup):
+    waiting_for_code = State()
+
+
+==================== FILE: bot/states/letter.py ====================
+from aiogram.fsm.state import State, StatesGroup
+
+
+class LetterStates(StatesGroup):
+    choosing_date = State()   # Выбор пресета (неделя, месяц, год, своя)
+    entering_date = State()   # Ввод даты: ДД.ММ.ГГГГ
+    entering_time = State()   # Ввод времени: ЧЧ:ММ
+    entering_text = State()   # Ввод текста письма
+    confirming = State()      # Подтверждение
+
+
+==================== FILE: bot/states/settings.py ====================
+from aiogram.fsm.state import State, StatesGroup
+
+
+class SettingsStates(StatesGroup):
+    waiting_for_timezone = State()
+
+
+==================== FILE: bot/utils/__init__.py ====================
+
+
+
+==================== FILE: bot/utils/navigation.py ====================
+from aiogram.types import Message, CallbackQuery
+from aiogram.fsm.context import FSMContext
+
+from bot.keyboards.main_kb import get_main_menu_kb
+
+
+async def back_to_main_menu(target: Message | CallbackQuery, state: FSMContext) -> None:
+    """
+    Универсальный возврат в главное меню.
+    Гарантирует сброс состояния и наличие reply-клавиатуры.
+    """
+    # 1. Всегда сбрасываем состояние при возврате в главное меню
+    await state.clear()
+
+    if isinstance(target, CallbackQuery):
+        # 2. Убираем "часики" загрузки в клиенте Telegram
+        await target.answer()
+        
+        # 3. Безопасно удаляем сообщение с inline-клавиатурой
+        if target.message:
+            await target.message.delete()
+            chat_id = target.message.chat.id
+            bot = target.message.bot
+            
+            # 4. Отправляем новое сообщение от имени бота
+            await bot.send_message(
+                chat_id=chat_id,
+                text="🏠 Главное меню",
+                reply_markup=get_main_menu_kb()
+            )
+    else:
+        # Если вызов произошел из обычного Message (на будущее)
+        await target.answer(
+            text="🏠 Главное меню",
+            reply_markup=get_main_menu_kb()
+        )
+
+
+==================== FILE: bot/utils/timezone_utils.py ====================
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+def get_common_timezones() -> list[str]:
+    """Возвращает список популярных часовых поясов для выбора пользователем."""
+    return [
+        "Europe/Moscow",
+        "Europe/Kyiv",
+        "Europe/Minsk",
+        "Europe/Berlin",
+        "Europe/London",
+        "America/New_York",
+        "Asia/Almaty",
+        "Asia/Tashkent",
+        "Asia/Dubai",
+        "UTC",
+    ]
+
+
+def validate_timezone(tz_name: str) -> bool:
+    """
+    Проверяет, является ли строка валидным названием часового пояса.
+    Возвращает True, если пояс существует, иначе False.
+    """
+    try:
+        ZoneInfo(tz_name)
+        return True
+    except ZoneInfoNotFoundError:
+        logger.warning(f"Невалидный часовой пояс: {tz_name}")
+        return False
+    except Exception as e:
+        logger.error(f"Ошибка при проверке часового пояса {tz_name}: {e}")
+        return False
+
+
+def to_utc(dt: datetime, tz_name: str) -> datetime:
+    """
+    Конвертирует наивное (без часового пояса) или локальное datetime 
+    в UTC для сохранения в базу данных.
+    
+    :param dt: Объект datetime (предполагается, что он в локальном времени пользователя)
+    :param tz_name: Строка с названием часового пояса пользователя (например, "Europe/Moscow")
+    :return: Объект datetime с часовым поясом UTC
+    """
+    if not validate_timezone(tz_name):
+        tz_name = "UTC" # Fallback на случай невалидного пояса
+    
+    target_tz = ZoneInfo(tz_name)
+    
+    # Если datetime "наивный" (без tzinfo), считаем, что он в локальном поясе пользователя
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=target_tz)
+    
+    # Конвертируем в UTC
+    return dt.astimezone(timezone.utc)
+
+
+def to_local(dt: datetime, tz_name: str) -> datetime:
+    """
+    Конвертирует datetime из UTC (например, из БД) в локальное время пользователя для отображения.
+    
+    :param dt: Объект datetime (предполагается, что он в UTC)
+    :param tz_name: Строка с названием часового пояса пользователя
+    :return: Объект datetime в локальном часовом поясе
+    """
+    if not validate_timezone(tz_name):
+        tz_name = "UTC"
+    
+    target_tz = ZoneInfo(tz_name)
+    
+    # Если datetime "наивный", считаем, что это UTC (стандарт для БД)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    
+    # Конвертируем в локальный пояс
+    return dt.astimezone(target_tz)
+
+
+==================== FILE: database/__init__.py ====================
+from database.session import async_session_maker, engine
+
+__all__ = ["engine", "async_session_maker"]
+
+
+==================== FILE: database/session.py ====================
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
+from config import settings
+
+engine = create_async_engine(
+    url=settings.database_url,
+    echo=settings.DB_ECHO,
+)
+
+async_session_maker = async_sessionmaker(
+    bind=engine,
+    class_=AsyncSession,
+    expire_on_commit=False,  # Обязательно для async
+)
+
+
+==================== FILE: database/models/__init__.py ====================
+from database.models.base import Base
+from database.models.user import User
+from database.models.couple import Couple
+from database.models.letter import Letter
+
+__all__ = ["Base", "User", "Couple", "Letter"]
+
+
+==================== FILE: database/models/base.py ====================
+from sqlalchemy.orm import DeclarativeBase
+
+
+class Base(DeclarativeBase):
+    """
+    Базовый класс для всех ORM-моделей проекта.
+    В SQLAlchemy 2.0 используется наследование от DeclarativeBase.
+    """
+    pass
+
+
+==================== FILE: database/models/couple.py ====================
+from datetime import datetime
+
+from sqlalchemy import ForeignKey, String, DateTime, func, BigInteger
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from database.models.base import Base
+
+
+class Couple(Base):
+    __tablename__ = "couples"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    user1_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.telegram_id"))
+    user2_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("users.telegram_id"), nullable=True)
+
+    status: Mapped[str] = mapped_column(String(10), default="pending")
+    invite_code: Mapped[str] = mapped_column(String(6), unique=True, index=True)
+    invite_expires: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    activated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    # Связи — чтобы потом получать имя партнёра без лишних запросов
+    user1 = relationship("User", foreign_keys=[user1_id], primaryjoin="Couple.user1_id == User.telegram_id")
+    user2 = relationship("User", foreign_keys=[user2_id], primaryjoin="Couple.user2_id == User.telegram_id")
+
+
+==================== FILE: database/models/letter.py ====================
+from datetime import datetime
+
+from sqlalchemy import DateTime, ForeignKey, String, func
+from sqlalchemy.orm import Mapped, mapped_column
+
+from database.models.base import Base  # <-- Исправленный путь
+
+
+class Letter(Base):
+    __tablename__ = "letters"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    
+    couple_id: Mapped[int] = mapped_column(ForeignKey("couples.id"))
+    sender_id: Mapped[int] = mapped_column(ForeignKey("users.telegram_id"))
+    receiver_id: Mapped[int] = mapped_column(ForeignKey("users.telegram_id"))
+
+    text: Mapped[str] = mapped_column(String(4096))
+    open_date: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    
+    status: Mapped[str] = mapped_column(String(20), server_default="pending")
+    delivered_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), 
+        nullable=True, 
+        default=None
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), 
+        server_default=func.now()
+    )
+
+
+==================== FILE: database/models/user.py ====================
+from datetime import datetime
+from typing import Optional
+
+from sqlalchemy import BigInteger, String, Boolean, func
+from sqlalchemy.orm import Mapped, mapped_column
+
+from database.models.base import Base
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    
+    telegram_id: Mapped[int] = mapped_column(
+        BigInteger, unique=True, nullable=False, index=True
+    )
+    username: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    first_name: Mapped[str] = mapped_column(String(64), nullable=False)
+    last_name: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+
+    timezone: Mapped[str] = mapped_column(String(32), server_default="UTC", nullable=False)
+    notifications: Mapped[bool] = mapped_column(Boolean, server_default="true", nullable=False)
+
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    def __repr__(self) -> str:
+        return f"<User(id={self.id}, telegram_id={self.telegram_id}, username={self.username})>"
+
+
+==================== FILE: database/repositories/__init__.py ====================
+from database.repositories.base import BaseRepository
+from database.repositories.user import UserRepository
+from database.repositories.couple import CoupleRepository
+
+__all__ = ["BaseRepository", "UserRepository", "CoupleRepository"]
+
+
+==================== FILE: database/repositories/base.py ====================
+from typing import Generic, Optional, Sequence, Type, TypeVar
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from database.models import Base
+
+ModelType = TypeVar("ModelType", bound=Base)
+
+
+class BaseRepository(Generic[ModelType]):
+    """Базовый асинхронный репозиторий для выполнения CRUD-операций."""
+
+    def __init__(self, model: Type[ModelType], session: AsyncSession) -> None:
+        self.model = model
+        self.session = session
+
+    async def get_by_id(self, id: int) -> Optional[ModelType]:
+        """Получить запись по primary key (id)."""
+        return await self.session.get(self.model, id)
+
+    async def get_all(self) -> Sequence[ModelType]:
+        """Получить все записи сущности."""
+        stmt = select(self.model)
+        result = await self.session.execute(stmt)
+        return result.scalars().all()
+
+    async def add(self, entity: ModelType) -> ModelType:
+        """Добавить новую сущность в сессию."""
+        self.session.add(entity)
+        await self.session.flush()
+        return entity
+
+    async def delete(self, entity: ModelType) -> None:
+        """Удалить сущность из сессии."""
+        await self.session.delete(entity)
+        await self.session.flush()
+
+
+==================== FILE: database/repositories/couple.py ====================
+from datetime import datetime, timezone
+
+from sqlalchemy import select, update
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from database.models.couple import Couple
+from database.repositories.base import BaseRepository
+
+
+class CoupleRepository(BaseRepository[Couple]):
+    def __init__(self, session: AsyncSession):
+        super().__init__(Couple, session)
+
+    async def create_couple(
+        self,
+        user1_id: int,
+        invite_code: str,
+        invite_expires: datetime,
+    ) -> Couple:
+        """Создать новую пару (статус pending)"""
+        couple = Couple(
+            user1_id=user1_id,
+            user2_id=None,
+            status="pending",
+            invite_code=invite_code,
+            invite_expires=invite_expires,
+        )
+        self.session.add(couple)
+        await self.session.flush()  # чтобы получить id
+        return couple
+
+    async def get_by_user_id(self, user_id: int) -> Couple | None:
+        """Найти активную пару по ID пользователя (как user1 или user2)"""
+        query = select(Couple).where(
+            Couple.status == "active",
+            ((Couple.user1_id == user_id) | (Couple.user2_id == user_id)),
+        )
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none()
+
+    async def get_pending_by_user_id(self, user_id: int) -> Couple | None:
+        """Найти pending пару создателя (чтобы показать код)"""
+        query = select(Couple).where(
+            Couple.user1_id == user_id,
+            Couple.status == "pending",
+        )
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none()
+
+    async def get_by_invite_code(self, invite_code: str) -> Couple | None:
+        """Найти пару по коду приглашения"""
+        query = select(Couple).where(
+            Couple.invite_code == invite_code,
+            Couple.status == "pending",
+        )
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none()
+
+    async def activate_couple(self, couple_id: int, user2_id: int) -> Couple:
+        """Активировать пару (присоединить второго пользователя)"""
+        query = (
+            update(Couple)
+            .where(Couple.id == couple_id)
+            .values(
+                user2_id=user2_id,
+                status="active",
+                activated_at=datetime.now(timezone.utc),
+            )
+            .returning(Couple)
+        )
+        result = await self.session.execute(query)
+        await self.session.flush()
+        return result.scalar_one()
+
+    async def break_couple(self, couple_id: int) -> None:
+        """Завершить пару (статус broken)"""
+        query = (
+            update(Couple)
+            .where(Couple.id == couple_id)
+            .values(status="broken")
+        )
+        await self.session.execute(query)
+
+    async def update_invite_code(
+        self,
+        couple_id: int,
+        invite_code: str,
+        invite_expires: datetime,
+    ) -> Couple:
+        """Обновить код приглашения в pending-паре"""
+        query = (
+            update(Couple)
+            .where(
+                Couple.id == couple_id,
+                Couple.status == "pending",
+            )
+            .values(
+                invite_code=invite_code,
+                invite_expires=invite_expires,
+            )
+            .returning(Couple)
+        )
+        result = await self.session.execute(query)
+        await self.session.flush()
+        return result.scalar_one()
+
+    async def cancel_pending_by_user(self, user_id: int) -> None:
+        """Отменить pending-пары пользователя, где он является создателем"""
+        query = (
+            update(Couple)
+            .where(
+                Couple.user1_id == user_id,
+                Couple.status == "pending",
+            )
+            .values(status="cancelled")
+        )
+        await self.session.execute(query)
+        await self.session.flush()
+
+
+==================== FILE: database/repositories/letter.py ====================
+from datetime import datetime
+
+from sqlalchemy import select, update
+
+from database.models.letter import Letter
+from database.repositories.base import BaseRepository
+
+
+class LetterRepository(BaseRepository[Letter]):
+    
+    def __init__(self, session) -> None:
+        super().__init__(Letter, session)
+
+    async def create(self, letter: Letter) -> Letter:
+        """Создаёт письмо и возвращает его с проставленным id."""
+        self.session.add(letter)
+        await self.session.flush()
+        return letter
+
+    async def get_pending(self, now: datetime) -> list[Letter]:
+        """Находит все письма, которые пора доставить.
+        
+        Использует FOR UPDATE SKIP LOCKED для предотвращения гонки:
+        если два воркера запустятся одновременно, каждый получит свой набор писем.
+        """
+        query = (
+            select(Letter)
+            .where(
+                Letter.status == "pending",
+                Letter.open_date <= now
+            )
+            .with_for_update(skip_locked=True)  # Блокируем строки, другие транзакции их пропустят
+        )
+        result = await self.session.execute(query)
+        return list(result.scalars().all())
+
+    async def mark_delivered(self, letter_id: int, delivered_at: datetime) -> None:
+        """Помечает письмо как доставленное."""
+        query = (
+            update(Letter)
+            .where(Letter.id == letter_id)
+            .values(status="delivered", delivered_at=delivered_at)
+        )
+        await self.session.execute(query)
+        await self.session.flush()
+
+    async def cancel_by_couple(self, couple_id: int) -> None:
+        """Отменяет все активные письма пары при разрыве."""
+        query = (
+            update(Letter)
+            .where(Letter.couple_id == couple_id, Letter.status == "pending")
+            .values(status="cancelled")
+        )
+        await self.session.execute(query)
+        await self.session.flush()
+
+    async def get_active_by_user(self, user_id: int) -> list[Letter]:
+        """Получает все не отправленные и не отмененные письма пользователя."""
+        query = select(Letter).where(
+            Letter.sender_id == user_id,
+            Letter.status == "pending"
+        )
+        result = await self.session.execute(query)
+        return list(result.scalars().all())
+    
+    async def get_by_id(self, letter_id: int) -> Letter | None:
+        """Получает письмо по ID."""
+        query = select(Letter).where(Letter.id == letter_id)
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none()
+
+
+==================== FILE: database/repositories/user.py ====================
+from typing import Optional
+
+from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from database.models.user import User
+from database.repositories.base import BaseRepository
+
+
+class UserRepository(BaseRepository[User]):
+    """Репозиторий для работы с таблицей пользователей."""
+
+    def __init__(self, session: AsyncSession) -> None:
+        super().__init__(User, session)
+
+    async def get_by_tg_id(self, telegram_id: int) -> Optional[User]:
+        """Получить пользователя по Telegram ID."""
+        stmt = select(User).where(User.telegram_id == telegram_id)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+    
+    async def get_by_id(self, user_id: int) -> Optional[User]:
+        """Получить пользователя по внутреннему ID."""
+        stmt = select(User).where(User.id == user_id)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def upsert(
+        self,
+        telegram_id: int,
+        first_name: str,
+        username: Optional[str] = None,
+        last_name: Optional[str] = None,
+    ) -> User:
+        """
+        Атомарный UPSERT через PostgreSQL ON CONFLICT.
+        Если пользователя нет — создает. Если есть — обновляет имя.
+        """
+        stmt = (
+            pg_insert(User)
+            .values(
+                telegram_id=telegram_id,
+                username=username,
+                first_name=first_name,
+                last_name=last_name,
+            )
+            .on_conflict_do_update(
+                index_elements=[User.telegram_id],
+                set_={
+                    "username": username,
+                    "first_name": first_name,
+                    "last_name": last_name,
+                },
+            )
+            .returning(User)
+        )
+
+        result = await self.session.execute(stmt)
+        return result.scalar_one()
+
+    async def update_settings(
+        self,
+        telegram_id: int,
+        timezone: Optional[str] = None,
+        notifications: Optional[bool] = None,
+    ) -> Optional[User]:
+        """
+        Обновляет только переданные настройки.
+        Изменения зафиксирует DbSessionMiddleware при коммите.
+        """
+        user = await self.get_by_tg_id(telegram_id)
+        if not user:
+            return None
+
+        if timezone is not None:
+            user.timezone = timezone
+        if notifications is not None:
+            user.notifications = notifications
+
+        return user
+
+
+==================== FILE: services/__init__.py ====================
+from services.user_service import UserService
+from services.couple_service import CoupleService
+
+__all__ = ["UserService", "CoupleService"]
+
+
+==================== FILE: services/couple_service.py ====================
+import secrets
+import string
+from datetime import datetime, timedelta, timezone
+
+from sqlalchemy.exc import IntegrityError
+from aiogram import Bot
+from aiogram.exceptions import TelegramBadRequest
+
+from database.repositories.couple import CoupleRepository
+from database.models.couple import Couple
+from services.letter_service import LetterService
+
+
+class CoupleService:
+    def __init__(
+        self, 
+        couple_repo: CoupleRepository,
+        letter_service: LetterService,
+        bot: Bot
+    ):
+        self.couple_repo = couple_repo
+        self.letter_service = letter_service
+        self.bot = bot
+
+    @staticmethod
+    def _generate_invite_code() -> str:
+        """Генерация 6-символьного кода без неоднозначных символов"""
+        alphabet = string.ascii_uppercase.replace("O", "").replace("I", "").replace("L", "")
+        alphabet += string.digits.replace("0", "").replace("1", "")
+        return "".join(secrets.choice(alphabet) for _ in range(6))
+
+    async def create_couple(self, user_id: int) -> Couple:
+        """Создать новую пару или обновить код в pending-паре"""
+        existing = await self.couple_repo.get_by_user_id(user_id)
+        if existing:
+            raise ValueError("Ты уже в паре")
+
+        invite_code = self._generate_invite_code()
+        invite_expires = datetime.now(timezone.utc) + timedelta(hours=24)
+
+        pending = await self.couple_repo.get_pending_by_user_id(user_id)
+
+        if pending:
+            try:
+                return await self.couple_repo.update_invite_code(
+                    couple_id=pending.id,
+                    invite_code=invite_code,
+                    invite_expires=invite_expires,
+                )
+            except IntegrityError:
+                raise ValueError("Не удалось создать код. Попробуй ещё раз")
+
+        try:
+            return await self.couple_repo.create_couple(
+                user1_id=user_id,
+                invite_code=invite_code,
+                invite_expires=invite_expires,
+            )
+        except IntegrityError:
+            raise ValueError("Не удалось создать код. Попробуй ещё раз")
+
+    async def join_couple(self, user_id: int, invite_code: str) -> Couple:
+        """Присоединиться к паре по коду"""
+        existing = await self.couple_repo.get_by_user_id(user_id)
+        if existing:
+            raise ValueError("Ты уже в паре")
+
+        couple = await self.couple_repo.get_by_invite_code(invite_code)
+        if not couple:
+            raise ValueError("Код не найден")
+
+        if couple.invite_expires < datetime.now(timezone.utc):
+            raise ValueError("Код истёк")
+
+        if couple.user1_id == user_id:
+            raise ValueError("Нельзя присоединиться к самому себе")
+
+        activated = await self.couple_repo.activate_couple(couple.id, user_id)
+
+        # Если пользователь до этого создавал свою pending-пару — отменяем её
+        await self.couple_repo.cancel_pending_by_user(user_id)
+
+        return activated
+
+    async def get_couple(self, user_id: int) -> Couple | None:
+        """Получить активную пару пользователя"""
+        return await self.couple_repo.get_by_user_id(user_id)
+
+    async def leave_couple(self, user_id: int) -> None:
+        """Выйти из пары"""
+        couple = await self.couple_repo.get_by_user_id(user_id)
+        if not couple:
+            raise ValueError("Ты не в паре")
+
+        # 1. Разрываем пару
+        await self.couple_repo.break_couple(couple.id)
+        
+        # 2. Отменяем все активные письма (ВАЖНО!)
+        await self.letter_service.cancel_pending_letters(couple.id)
+        
+        # 3. Уведомляем партнера
+        partner_id = couple.user2_id if couple.user1_id == user_id else couple.user1_id
+        if partner_id:
+            try:
+                await self.bot.send_message(
+                    chat_id=partner_id,
+                    text="💔 Твой партнер решил завершить отношения. Пара распалась."
+                )
+            except TelegramBadRequest:
+                pass  # Партнер мог заблокировать бота
+
+
+==================== FILE: services/letter_service.py ====================
+import logging
+from datetime import datetime, timezone
+
+from aiogram import Bot
+from aiogram.exceptions import TelegramBadRequest
+
+from bot.utils.timezone_utils import to_local
+from database.models.letter import Letter
+from database.repositories.letter import LetterRepository
+from database.repositories.user import UserRepository
+
+logger = logging.getLogger(__name__)
+
+
+class LetterService:
+    def __init__(
+        self, 
+        letter_repo: LetterRepository, 
+        user_repo: UserRepository, 
+        bot: Bot
+    ) -> None:
+        self._letter_repo = letter_repo
+        self._user_repo = user_repo
+        self._bot = bot
+
+    async def create_letter(
+        self, 
+        couple_id: int, 
+        sender_id: int, 
+        receiver_id: int, 
+        text: str, 
+        open_date: datetime
+    ) -> Letter:
+        """Создаёт новое письмо."""
+        letter = Letter(
+            couple_id=couple_id,
+            sender_id=sender_id,
+            receiver_id=receiver_id,
+            text=text,
+            open_date=open_date,
+            status="pending"
+        )
+        return await self._letter_repo.create(letter)
+
+    async def get_pending_letters(self, now: datetime) -> list[Letter]:
+        """Возвращает все письма, которые пора доставить."""
+        return await self._letter_repo.get_pending(now)
+
+    async def get_letter_by_id(self, letter_id: int) -> Letter | None:
+        """Получает письмо по ID."""
+        return await self._letter_repo.get_by_id(letter_id)
+
+    async def deliver_letter(self, letter: Letter) -> None:
+        """Отправляет письмо, обновляет БД и уведомляет отправителя."""
+        sender = await self._user_repo.get_by_tg_id(letter.sender_id)
+        receiver = await self._user_repo.get_by_tg_id(letter.receiver_id)
+        
+        sender_name = (sender.first_name or sender.username or "Твой партнер") if sender else "Твой партнер"
+        receiver_name = (receiver.first_name or receiver.username or "партнер") if receiver else "партнер"
+
+        receiver_tz = receiver.timezone if receiver else "UTC"
+        sender_tz = sender.timezone if sender else "UTC"
+
+        # 1. Отправляем письмо получателю С КНОПКАМИ
+        try:
+            created_local = to_local(letter.created_at, receiver_tz)
+            opened_local = to_local(letter.open_date, receiver_tz)
+            
+            # Импортируем клавиатуру здесь, чтобы избежать циклических импортов
+            from bot.keyboards.letter_delivery_kb import get_letter_delivery_kb
+            
+            await self._bot.send_message(
+                chat_id=letter.receiver_id,
+                text=(
+                    f"💌 <b>Письмо из капсулы времени!</b>\n\n"
+                    f"От: {sender_name}\n"
+                    f"Дата написания: {created_local.strftime('%d.%m.%Y')}\n"
+                    f"Дата открытия: {opened_local.strftime('%d.%m.%Y в %H:%M')}\n\n"
+                    f"✨ <i>{letter.text}</i>"
+                ),
+                reply_markup=get_letter_delivery_kb(letter.id),
+                parse_mode="HTML"
+            )
+        except TelegramBadRequest as e:
+            logger.warning(f"Не удалось доставить письмо {letter.id} пользователю {letter.receiver_id}: {e}")
+
+        # 2. Помечаем как доставленное в БД
+        await self._letter_repo.mark_delivered(letter.id, datetime.now(timezone.utc))
+
+        # 3. Уведомляем отправителя
+        try:
+            delivered_local = to_local(datetime.now(timezone.utc), sender_tz)
+            await self._bot.send_message(
+                chat_id=letter.sender_id,
+                text=(
+                    f"💌 Твоё письмо для {receiver_name} было доставлено!\n"
+                    f"📅 {delivered_local.strftime('%d.%m.%Y в %H:%M')}"
+                )
+            )
+        except TelegramBadRequest as e:
+            logger.warning(f"Не удалось уведомить отправителя {letter.sender_id} о письме {letter.id}: {e}")
+
+    async def cancel_pending_letters(self, couple_id: int) -> None:
+        """Отменяет все активные письма пары (при разрыве)."""
+        await self._letter_repo.cancel_by_couple(couple_id)
+
+    async def get_active_letters(self, user_id: int) -> list[Letter]:
+        """Возвращает все ожидающие письма пользователя."""
+        return await self._letter_repo.get_active_by_user(user_id)
+
+
+==================== FILE: services/user_service.py ====================
+from typing import Optional
+
+from database.models.user import User
+from database.repositories.user import UserRepository
+from bot.utils.timezone_utils import validate_timezone
+
+
+class UserService:
+    def __init__(self, user_repo: UserRepository):
+        self._user_repo = user_repo
+
+    async def get_or_create_user(
+        self,
+        telegram_id: int,
+        first_name: str,
+        username: Optional[str] = None,
+        last_name: Optional[str] = None,
+    ) -> User:
+        """Получает пользователя или создает/обновляет его при первом взаимодействии (UPSERT)."""
+        return await self._user_repo.upsert(
+            telegram_id=telegram_id,
+            first_name=first_name,
+            username=username,
+            last_name=last_name,
+        )
+
+    async def get_profile(self, telegram_id: int) -> Optional[User]:
+        """Получает профиль пользователя по telegram_id."""
+        return await self._user_repo.get_by_tg_id(telegram_id)
+
+    async def update_settings(
+        self,
+        telegram_id: int,
+        timezone: Optional[str] = None,
+        notifications: Optional[bool] = None,
+    ) -> Optional[User]:
+        """Обновляет настройки пользователя. Изменяет только переданные не-None значения."""
+        # Валидация часового пояса перед сохранением
+        if timezone is not None and not validate_timezone(timezone):
+            raise ValueError(f"Невалидный часовой пояс: {timezone}")
+            
+        return await self._user_repo.update_settings(
+            telegram_id=telegram_id,
+            timezone=timezone,
+            notifications=notifications,
+        )
+    
+    async def get_user_by_id(self, user_id: int) -> Optional[User]:
+        """Получить пользователя по внутреннему ID."""
+        return await self._user_repo.get_by_id(user_id)
