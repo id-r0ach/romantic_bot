@@ -18,6 +18,7 @@ from database.repositories.letter import LetterRepository
 from database.repositories.memory import MemoryRepository
 from database.repositories.tree import TreeRepository
 from database.repositories.user import UserRepository
+from services.anniversary_service import AnniversaryService
 from services.letter_service import LetterService
 from services.tree_service import TreeService
 
@@ -78,13 +79,10 @@ async def check_pending_letters(bot: Bot) -> None:
 
         now = datetime.now(timezone.utc)
 
-        # Транзакция для защиты от гонки
         async with session.begin():
-            # get_pending использует FOR UPDATE SKIP LOCKED
             pending_letters = await letter_repo.get_pending(now)
 
             for letter in pending_letters:
-                # Дополнительная защита идемпотентности
                 if letter.status != "pending":
                     continue
 
@@ -93,8 +91,25 @@ async def check_pending_letters(bot: Bot) -> None:
                     logging.info(f"Письмо {letter.id} успешно доставлено.")
                 except Exception as e:
                     logging.error(f"Ошибка при доставке письма {letter.id}: {e}")
-                    # Пробрасываем исключение, чтобы session.begin() сделал rollback
                     raise
+
+
+async def check_anniversaries(bot: Bot) -> None:
+    """Фоновая задача: проверка годовщин каждую минуту."""
+    async with async_session_maker() as session:
+        memory_repo = MemoryRepository(session)
+        couple_repo = CoupleRepository(session)
+
+        anniversary_service = AnniversaryService(
+            memory_repo,
+            couple_repo,
+            bot,
+        )
+
+        async with session.begin():
+            await anniversary_service.check_and_notify(
+                datetime.now(timezone.utc)
+            )
 
 
 async def main() -> None:
@@ -105,7 +120,6 @@ async def main() -> None:
     dp.update.middleware(DbSessionMiddleware(session_pool=async_session_maker))
     dp.include_router(router)
 
-    # --- ИНИЦИАЛИЗАЦИЯ ПЛАНИРОВЩИКА ---
     scheduler = AsyncIOScheduler(timezone="UTC")
 
     async with Bot(token=settings.BOT_TOKEN) as bot:
@@ -117,8 +131,21 @@ async def main() -> None:
             id="check_pending_letters_job",
             replace_existing=True,
         )
+
+        scheduler.add_job(
+            check_anniversaries,
+            "interval",
+            minutes=1,
+            kwargs={"bot": bot},
+            id="check_anniversaries_job",
+            replace_existing=True,
+        )
+
         scheduler.start()
-        logging.info("Планировщик задач запущен (проверка писем каждую минуту).")
+        logging.info(
+            "Планировщик задач запущен: "
+            "проверка писем и годовщин каждую минуту."
+        )
 
         try:
             await set_bot_commands(bot)

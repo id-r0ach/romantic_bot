@@ -102,3 +102,34 @@ class MemoryRepository(BaseRepository[Memory]):
         )
         result = await self.session.execute(stmt)
         return result.scalar_one()
+
+
+    async def get_anniversaries_for_couple_on_date(
+        self,
+        couple_id: int,
+        today: date,
+    ) -> list[Memory]:
+        """
+        Возвращает годовщины пары, которые нужно поздравить сегодня.
+
+        Условия:
+        - месяц и день совпадают с сегодняшним днём;
+        - год события меньше текущего года;
+        - уведомление за сегодня ещё не отправлялось.
+        """
+        stmt = (
+            select(Memory)
+            .where(
+                Memory.couple_id == couple_id,
+                extract("month", Memory.memory_date) == today.month,
+                extract("day", Memory.memory_date) == today.day,
+                extract("year", Memory.memory_date) < today.year,
+                or_(
+                    Memory.last_notified.is_(None),
+                    Memory.last_notified != today,
+                ),
+            )
+            .order_by(Memory.memory_date.asc())
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())

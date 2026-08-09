@@ -687,6 +687,7 @@ from database.repositories.letter import LetterRepository
 from database.repositories.memory import MemoryRepository
 from database.repositories.tree import TreeRepository
 from database.repositories.user import UserRepository
+from services.anniversary_service import AnniversaryService
 from services.letter_service import LetterService
 from services.tree_service import TreeService
 
@@ -747,13 +748,10 @@ async def check_pending_letters(bot: Bot) -> None:
 
         now = datetime.now(timezone.utc)
 
-        # Транзакция для защиты от гонки
         async with session.begin():
-            # get_pending использует FOR UPDATE SKIP LOCKED
             pending_letters = await letter_repo.get_pending(now)
 
             for letter in pending_letters:
-                # Дополнительная защита идемпотентности
                 if letter.status != "pending":
                     continue
 
@@ -762,8 +760,25 @@ async def check_pending_letters(bot: Bot) -> None:
                     logging.info(f"Письмо {letter.id} успешно доставлено.")
                 except Exception as e:
                     logging.error(f"Ошибка при доставке письма {letter.id}: {e}")
-                    # Пробрасываем исключение, чтобы session.begin() сделал rollback
                     raise
+
+
+async def check_anniversaries(bot: Bot) -> None:
+    """Фоновая задача: проверка годовщин каждую минуту."""
+    async with async_session_maker() as session:
+        memory_repo = MemoryRepository(session)
+        couple_repo = CoupleRepository(session)
+
+        anniversary_service = AnniversaryService(
+            memory_repo,
+            couple_repo,
+            bot,
+        )
+
+        async with session.begin():
+            await anniversary_service.check_and_notify(
+                datetime.now(timezone.utc)
+            )
 
 
 async def main() -> None:
@@ -774,7 +789,6 @@ async def main() -> None:
     dp.update.middleware(DbSessionMiddleware(session_pool=async_session_maker))
     dp.include_router(router)
 
-    # --- ИНИЦИАЛИЗАЦИЯ ПЛАНИРОВЩИКА ---
     scheduler = AsyncIOScheduler(timezone="UTC")
 
     async with Bot(token=settings.BOT_TOKEN) as bot:
@@ -786,8 +800,21 @@ async def main() -> None:
             id="check_pending_letters_job",
             replace_existing=True,
         )
+
+        scheduler.add_job(
+            check_anniversaries,
+            "interval",
+            minutes=1,
+            kwargs={"bot": bot},
+            id="check_anniversaries_job",
+            replace_existing=True,
+        )
+
         scheduler.start()
-        logging.info("Планировщик задач запущен (проверка писем каждую минуту).")
+        logging.info(
+            "Планировщик задач запущен: "
+            "проверка писем и годовщин каждую минуту."
+        )
 
         try:
             await set_bot_commands(bot)
@@ -4042,6 +4069,13 @@ class CoupleRepository(BaseRepository[Couple]):
         await self.session.flush()
 
 
+    async def get_active_couples(self) -> list[Couple]:
+        """Возвращает все активные пары."""
+        query = select(Couple).where(Couple.status == "active")
+        result = await self.session.execute(query)
+        return list(result.scalars().all())
+
+
 ==================== FILE: database/repositories/letter.py ====================
 from datetime import datetime
 
@@ -4236,6 +4270,37 @@ class MemoryRepository(BaseRepository[Memory]):
         return result.scalar_one()
 
 
+    async def get_anniversaries_for_couple_on_date(
+        self,
+        couple_id: int,
+        today: date,
+    ) -> list[Memory]:
+        """
+        Возвращает годовщины пары, которые нужно поздравить сегодня.
+
+        Условия:
+        - месяц и день совпадают с сегодняшним днём;
+        - год события меньше текущего года;
+        - уведомление за сегодня ещё не отправлялось.
+        """
+        stmt = (
+            select(Memory)
+            .where(
+                Memory.couple_id == couple_id,
+                extract("month", Memory.memory_date) == today.month,
+                extract("day", Memory.memory_date) == today.day,
+                extract("year", Memory.memory_date) < today.year,
+                or_(
+                    Memory.last_notified.is_(None),
+                    Memory.last_notified != today,
+                ),
+            )
+            .order_by(Memory.memory_date.asc())
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+
 ==================== FILE: database/repositories/tree.py ====================
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -4416,6 +4481,138 @@ __all__ = [
     "MemoryService",
     "TreeService",
 ]
+
+
+==================== FILE: services/anniversary_service.py ====================
+import logging
+from datetime import datetime, timezone
+from html import escape
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
+from aiogram import Bot
+from aiogram.exceptions import TelegramBadRequest
+
+from database.models.couple import Couple
+from database.models.memory import Memory
+from database.repositories.couple import CoupleRepository
+from database.repositories.memory import MemoryRepository
+
+logger = logging.getLogger(__name__)
+
+
+class AnniversaryService:
+    def __init__(
+        self,
+        memory_repo: MemoryRepository,
+        couple_repo: CoupleRepository,
+        bot: Bot,
+    ) -> None:
+        self._memory_repo = memory_repo
+        self._couple_repo = couple_repo
+        self._bot = bot
+
+    def _get_timezone(self, tz_name: str):
+        """Возвращает часовой пояс или UTC как fallback."""
+        try:
+            return ZoneInfo(tz_name)
+        except (ZoneInfoNotFoundError, ValueError, TypeError):
+            return timezone.utc
+
+    @staticmethod
+    def _format_years(years: int) -> str:
+        """
+        Форматирует количество лет.
+
+        Примеры:
+            1 год
+            2 года
+            5 лет
+            21 год
+            22 года
+            25 лет
+        """
+        if years % 100 in (11, 12, 13, 14):
+            return f"{years} лет"
+
+        if years % 10 == 1:
+            return f"{years} год"
+
+        if years % 10 in (2, 3, 4):
+            return f"{years} года"
+
+        return f"{years} лет"
+
+    def _build_message(self, memories: list[Memory], today: datetime) -> str:
+        """
+        Собирает одно сообщение для всех годовщин пары.
+        """
+        lines = ["❤️ <b>Сегодня годовщина!</b>"]
+
+        for memory in memories:
+            years = today.year - memory.memory_date.year
+            years_text = self._format_years(years)
+            title = escape(memory.title)
+            lines.append(f"📖 «{title}» — {years_text}")
+
+        return "\n".join(lines)
+
+    async def check_and_notify(self, now_utc: datetime) -> None:
+        """
+        Проверяет, нужно ли отправить напоминание о годовщине.
+
+        Логика:
+        - берём все активные пары;
+        - переводим текущий момент в часовой пояс пары;
+        - если время уже >= anniversary_time, проверяем годовщины;
+        - если есть годовщины сегодня и они ещё не уведомлены — отправляем;
+        - помечаем last_notified сегодняшней датой.
+        """
+        couples = await self._couple_repo.get_active_couples()
+
+        for couple in couples:
+            tz = self._get_timezone(couple.anniversary_tz)
+            local_now = now_utc.astimezone(tz)
+
+            # Если время напоминания ещё не наступило — пропускаем.
+            if local_now.time() < couple.anniversary_time:
+                continue
+
+            today = local_now.date()
+
+            memories = await self._memory_repo.get_anniversaries_for_couple_on_date(
+                couple_id=couple.id,
+                today=today,
+            )
+
+            if not memories:
+                continue
+
+            text = self._build_message(memories, local_now)
+
+            recipients: list[int] = [couple.user1_id]
+
+            if couple.user2_id is not None:
+                recipients.append(couple.user2_id)
+
+            for chat_id in recipients:
+                try:
+                    await self._bot.send_message(
+                        chat_id=chat_id,
+                        text=text,
+                        parse_mode="HTML",
+                    )
+                except TelegramBadRequest as e:
+                    logger.warning(
+                        f"Не удалось отправить годовщину пользователю {chat_id}: {e}"
+                    )
+
+            for memory in memories:
+                await self._memory_repo.mark_notified(memory.id, today)
+
+            logger.info(
+                f"Отправлено напоминание о годовщине для пары {couple.id}: "
+                f"{len(memories)} событий"
+            )
 
 
 ==================== FILE: services/couple_service.py ====================
