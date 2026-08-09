@@ -13,9 +13,13 @@ from bot.handlers import router
 from bot.middlewares.db import DbSessionMiddleware
 from config import settings
 from database import async_session_maker, engine
+from database.repositories.couple import CoupleRepository
 from database.repositories.letter import LetterRepository
+from database.repositories.memory import MemoryRepository
+from database.repositories.tree import TreeRepository
 from database.repositories.user import UserRepository
 from services.letter_service import LetterService
+from services.tree_service import TreeService
 
 logging.basicConfig(
     level=logging.INFO,
@@ -51,28 +55,45 @@ async def set_bot_commands(bot: Bot) -> None:
 async def check_pending_letters(bot: Bot) -> None:
     """Фоновая задача: проверка и доставка писем каждую минуту."""
     async with async_session_maker() as session:
-        letter_repo = LetterRepository(session)
         user_repo = UserRepository(session)
-        letter_service = LetterService(letter_repo, user_repo, bot)
-        
+        couple_repo = CoupleRepository(session)
+        letter_repo = LetterRepository(session)
+        memory_repo = MemoryRepository(session)
+        tree_repo = TreeRepository(session)
+
+        tree_service = TreeService(
+            tree_repo,
+            couple_repo,
+            memory_repo,
+            letter_repo,
+            bot,
+        )
+
+        letter_service = LetterService(
+            letter_repo,
+            user_repo,
+            bot,
+            tree_service,
+        )
+
         now = datetime.now(timezone.utc)
-        
-        # <-- ИЗМЕНЕНО: Оборачиваем в транзакцию для защиты от гонки
+
+        # Транзакция для защиты от гонки
         async with session.begin():
-            # get_pending теперь использует FOR UPDATE SKIP LOCKED
+            # get_pending использует FOR UPDATE SKIP LOCKED
             pending_letters = await letter_repo.get_pending(now)
-            
+
             for letter in pending_letters:
-                # <-- ИЗМЕНЕНО: Идемпотентность (дополнительная защита)
+                # Дополнительная защита идемпотентности
                 if letter.status != "pending":
                     continue
-                
+
                 try:
                     await letter_service.deliver_letter(letter)
                     logging.info(f"Письмо {letter.id} успешно доставлено.")
                 except Exception as e:
                     logging.error(f"Ошибка при доставке письма {letter.id}: {e}")
-                    # Пробрасываем исключение, чтобы session.begin() автоматически сделал rollback
+                    # Пробрасываем исключение, чтобы session.begin() сделал rollback
                     raise
 
 
@@ -80,22 +101,21 @@ async def main() -> None:
     await check_db_connection()
 
     storage = RedisStorage.from_url(settings.redis_url)
-    
     dp = Dispatcher(storage=storage)
     dp.update.middleware(DbSessionMiddleware(session_pool=async_session_maker))
     dp.include_router(router)
 
     # --- ИНИЦИАЛИЗАЦИЯ ПЛАНИРОВЩИКА ---
     scheduler = AsyncIOScheduler(timezone="UTC")
-    
+
     async with Bot(token=settings.BOT_TOKEN) as bot:
         scheduler.add_job(
-            check_pending_letters, 
-            "interval", 
-            minutes=1, 
+            check_pending_letters,
+            "interval",
+            minutes=1,
             kwargs={"bot": bot},
             id="check_pending_letters_job",
-            replace_existing=True
+            replace_existing=True,
         )
         scheduler.start()
         logging.info("Планировщик задач запущен (проверка писем каждую минуту).")

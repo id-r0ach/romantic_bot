@@ -1,8 +1,12 @@
+import logging
 from datetime import date, datetime, timezone
 
 from database.models.memory import Memory
 from database.repositories.couple import CoupleRepository
 from database.repositories.memory import MemoryRepository
+from services.tree_service import TreeService, XP_PER_MEMORY
+
+logger = logging.getLogger(__name__)
 
 
 class MemoryService:
@@ -10,9 +14,11 @@ class MemoryService:
         self,
         memory_repo: MemoryRepository,
         couple_repo: CoupleRepository,
+        tree_service: TreeService,
     ) -> None:
         self._memory_repo = memory_repo
         self._couple_repo = couple_repo
+        self._tree_service = tree_service
 
     async def create_memory(
         self,
@@ -22,7 +28,7 @@ class MemoryService:
         description: str | None,
         memory_date: date,
     ) -> Memory:
-        """Создаёт воспоминание после базовой валидации."""
+        """Создаёт воспоминание и начисляет XP дереву пары."""
         title = title.strip()
 
         if not title:
@@ -58,7 +64,20 @@ class MemoryService:
             memory_date=memory_date,
         )
 
-        return await self._memory_repo.create(memory)
+        created_memory = await self._memory_repo.create(memory)
+
+        try:
+            await self._tree_service.add_xp(
+                couple_id=couple_id,
+                amount=XP_PER_MEMORY,
+                reason="memory_created",
+            )
+        except Exception as e:
+            # Воспоминание уже создано.
+            # Если начисление XP упадёт, не теряем пользовательские данные.
+            logger.error(f"Не удалось начислить XP за воспоминание: {e}")
+
+        return created_memory
 
     async def get_memories(self, couple_id: int) -> list[Memory]:
         """Возвращает все воспоминания пары."""

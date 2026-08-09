@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 
 from database.models.letter import Letter
 from database.repositories.base import BaseRepository
@@ -68,3 +68,17 @@ class LetterRepository(BaseRepository[Letter]):
         query = select(Letter).where(Letter.id == letter_id)
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
+
+
+    async def count_delivered_by_couple(self, couple_id: int) -> int:
+        """Возвращает количество доставленных писем у пары."""
+        stmt = (
+            select(func.count())
+            .select_from(Letter)
+            .where(
+                Letter.couple_id == couple_id,
+                Letter.status == "delivered",
+            )
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one()

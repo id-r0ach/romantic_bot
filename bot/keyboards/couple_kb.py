@@ -1,6 +1,12 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-from bot.callbacks.main import CoupleAction, NavAction, LetterAction, MemoryAction
+from bot.callbacks.main import (
+    CoupleAction,
+    NavAction,
+    LetterAction,
+    MemoryAction,
+    TreeAction,
+)
 
 
 def get_couple_main_kb() -> InlineKeyboardMarkup:
@@ -34,6 +40,10 @@ def get_couple_in_pair_kb() -> InlineKeyboardMarkup:
             InlineKeyboardButton(
                 text="📖 История",
                 callback_data=MemoryAction(action="list").pack()
+            ),
+            InlineKeyboardButton(
+                text="🌳 Дерево",
+                callback_data=TreeAction(action="show").pack()
             )
         ],
         [

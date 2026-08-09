@@ -7,19 +7,22 @@ from aiogram import Bot
 from aiogram.exceptions import TelegramBadRequest
 
 from database.repositories.couple import CoupleRepository
+from database.repositories.user import UserRepository
 from database.models.couple import Couple
 from services.letter_service import LetterService
 
 
 class CoupleService:
     def __init__(
-        self, 
+        self,
         couple_repo: CoupleRepository,
         letter_service: LetterService,
-        bot: Bot
+        user_repo: UserRepository,
+        bot: Bot,
     ):
         self.couple_repo = couple_repo
         self.letter_service = letter_service
+        self.user_repo = user_repo
         self.bot = bot
 
     @staticmethod
@@ -32,8 +35,12 @@ class CoupleService:
     async def create_couple(self, user_id: int) -> Couple:
         """Создать новую пару или обновить код в pending-паре"""
         existing = await self.couple_repo.get_by_user_id(user_id)
+
         if existing:
             raise ValueError("Ты уже в паре")
+
+        user = await self.user_repo.get_by_tg_id(user_id)
+        anniversary_tz = user.timezone if user and user.timezone else "UTC"
 
         invite_code = self._generate_invite_code()
         invite_expires = datetime.now(timezone.utc) + timedelta(hours=24)
@@ -46,6 +53,7 @@ class CoupleService:
                     couple_id=pending.id,
                     invite_code=invite_code,
                     invite_expires=invite_expires,
+                    anniversary_tz=anniversary_tz,
                 )
             except IntegrityError:
                 raise ValueError("Не удалось создать код. Попробуй ещё раз")
@@ -55,6 +63,7 @@ class CoupleService:
                 user1_id=user_id,
                 invite_code=invite_code,
                 invite_expires=invite_expires,
+                anniversary_tz=anniversary_tz,
             )
         except IntegrityError:
             raise ValueError("Не удалось создать код. Попробуй ещё раз")

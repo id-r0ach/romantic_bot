@@ -91,3 +91,14 @@ class MemoryRepository(BaseRepository[Memory]):
         )
         await self.session.execute(stmt)
         await self.session.flush()
+
+
+    async def count_by_couple(self, couple_id: int) -> int:
+        """Возвращает количество воспоминаний у пары."""
+        stmt = (
+            select(func.count())
+            .select_from(Memory)
+            .where(Memory.couple_id == couple_id)
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one()

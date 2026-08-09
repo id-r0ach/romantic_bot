@@ -47,3 +47,8 @@ class MemoryAction(CallbackData, prefix="memory"):
         "delete_no",
     ]
     memory_id: int | None = None
+
+
+class TreeAction(CallbackData, prefix="tree"):
+    """Действия внутри экрана дерева."""
+    action: Literal["show"]

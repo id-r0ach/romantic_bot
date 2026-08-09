@@ -16,6 +16,7 @@ class CoupleRepository(BaseRepository[Couple]):
         user1_id: int,
         invite_code: str,
         invite_expires: datetime,
+        anniversary_tz: str = "UTC",
     ) -> Couple:
         """Создать новую пару (статус pending)"""
         couple = Couple(
@@ -24,6 +25,7 @@ class CoupleRepository(BaseRepository[Couple]):
             status="pending",
             invite_code=invite_code,
             invite_expires=invite_expires,
+            anniversary_tz=anniversary_tz,
         )
         self.session.add(couple)
         await self.session.flush()  # чтобы получить id
@@ -86,18 +88,24 @@ class CoupleRepository(BaseRepository[Couple]):
         couple_id: int,
         invite_code: str,
         invite_expires: datetime,
+        anniversary_tz: str | None = None,
     ) -> Couple:
         """Обновить код приглашения в pending-паре"""
+        values: dict = {
+            "invite_code": invite_code,
+            "invite_expires": invite_expires,
+        }
+
+        if anniversary_tz is not None:
+            values["anniversary_tz"] = anniversary_tz
+
         query = (
             update(Couple)
             .where(
                 Couple.id == couple_id,
                 Couple.status == "pending",
             )
-            .values(
-                invite_code=invite_code,
-                invite_expires=invite_expires,
-            )
+            .values(**values)
             .returning(Couple)
         )
         result = await self.session.execute(query)
