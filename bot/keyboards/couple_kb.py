@@ -1,6 +1,6 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-from bot.callbacks.main import CoupleAction, NavAction, LetterAction
+from bot.callbacks.main import CoupleAction, NavAction, LetterAction, MemoryAction
 
 
 def get_couple_main_kb() -> InlineKeyboardMarkup:
@@ -23,6 +23,7 @@ def get_couple_main_kb() -> InlineKeyboardMarkup:
             )
         ]
     ]
+
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
@@ -31,8 +32,14 @@ def get_couple_in_pair_kb() -> InlineKeyboardMarkup:
     buttons = [
         [
             InlineKeyboardButton(
+                text="📖 История",
+                callback_data=MemoryAction(action="list").pack()
+            )
+        ],
+        [
+            InlineKeyboardButton(
                 text="💌 Капсула времени",
-                callback_data=LetterAction(action="create").pack()  # <-- НОВАЯ КНОПКА
+                callback_data=LetterAction(action="create").pack()
             )
         ],
         [
@@ -48,6 +55,7 @@ def get_couple_in_pair_kb() -> InlineKeyboardMarkup:
             )
         ]
     ]
+
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
@@ -65,6 +73,7 @@ def get_couple_confirm_leave_kb() -> InlineKeyboardMarkup:
             )
         ]
     ]
+
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
@@ -82,4 +91,5 @@ def get_couple_confirm_leave_final_kb() -> InlineKeyboardMarkup:
             )
         ]
     ]
+
     return InlineKeyboardMarkup(inline_keyboard=buttons)

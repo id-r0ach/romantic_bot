@@ -1,6 +1,7 @@
 import argparse
 import os
 from pathlib import Path
+# python collect_project.py . all_project.txt
 
 # Папки, которые обычно не нужны в дампе проекта
 IGNORE_DIRS = {

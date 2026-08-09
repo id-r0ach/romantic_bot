@@ -7,9 +7,12 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from database.repositories.user import UserRepository
 from database.repositories.couple import CoupleRepository
 from database.repositories.letter import LetterRepository
+from database.repositories.memory import MemoryRepository
+
 from services.user_service import UserService
 from services.couple_service import CoupleService
 from services.letter_service import LetterService
+from services.memory_service import MemoryService
 
 
 class DbSessionMiddleware(BaseMiddleware):
@@ -19,33 +22,37 @@ class DbSessionMiddleware(BaseMiddleware):
         super().__init__()
         self.session_pool = session_pool
 
-    async def __call__(  # <-- ПРОВЕРЬ: здесь ровно по два подчеркивания с каждой стороны
+    async def __call__(
         self,
         handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
         event: TelegramObject,
         data: Dict[str, Any],
     ) -> Any:
         async with self.session_pool() as session:
-            # Создаем репозитории
+            # Репозитории
             user_repo = UserRepository(session)
             couple_repo = CoupleRepository(session)
             letter_repo = LetterRepository(session)
-            
-            # Получаем bot из data (aiogram добавляет его автоматически)
+            memory_repo = MemoryRepository(session)
+
+            # Bot уже находится в data благодаря aiogram
             bot = data["bot"]
-            
-            # Создаем сервисы с внедренными зависимостями
+
+            # Сервисы
             user_service = UserService(user_repo)
             letter_service = LetterService(letter_repo, user_repo, bot)
             couple_service = CoupleService(couple_repo, letter_service, bot)
-            
-            # Пробрасываем сессию и сервисы в data
+            memory_service = MemoryService(memory_repo, couple_repo)
+
+            # Пробрасываем зависимости в хэндлеры
             data["session"] = session
             data["user_repo"] = user_repo
             data["user_service"] = user_service
             data["couple_repo"] = couple_repo
             data["couple_service"] = couple_service
             data["letter_service"] = letter_service
+            data["memory_repo"] = memory_repo
+            data["memory_service"] = memory_service
 
             try:
                 result = await handler(event, data)

@@ -34,3 +34,16 @@ class LetterListAction(CallbackData, prefix="letter_list"):
     """Действия с письмом из списка /letters"""
     action: Literal["edit_text", "edit_date", "cancel_letter"]
     letter_id: int
+
+
+class MemoryAction(CallbackData, prefix="memory"):
+    """Действия внутри экрана 'История'."""
+    action: Literal[
+        "list",
+        "add",
+        "view",
+        "delete",
+        "delete_yes",
+        "delete_no",
+    ]
+    memory_id: int | None = None
