@@ -17,4 +17,4 @@ RUN chmod +x entrypoint.sh
 
 USER appuser
 
-ENTRYPOINT ["/app/entrypoint.sh"]
+ENTRYPOINT ["sh", "/app/entrypoint.sh"]
