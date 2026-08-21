@@ -4,6 +4,7 @@ from database.models.couple import Couple
 from database.models.letter import Letter
 from database.models.memory import Memory
 from database.models.tree import RelationshipTree
+from database.models.reason import Reason, ReasonGift, ReasonGiftStatus
 
 __all__ = [
     "Base",
@@ -12,4 +13,7 @@ __all__ = [
     "Letter",
     "Memory",
     "RelationshipTree",
+    "Reason",
+    "ReasonGift",
+    "ReasonGiftStatus",
 ]

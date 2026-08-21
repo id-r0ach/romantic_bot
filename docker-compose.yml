@@ -45,6 +45,8 @@ services:
         condition: service_healthy
     networks:
       - app_net
+    volumes:
+      - .:/app
 
 volumes:
   postgres_data:

@@ -18,6 +18,8 @@ from database.repositories.letter import LetterRepository
 from database.repositories.memory import MemoryRepository
 from database.repositories.tree import TreeRepository
 from database.repositories.user import UserRepository
+from database.repositories.reason import ReasonGiftRepository, ReasonRepository
+from services.reason_reminder_service import ReasonReminderService
 from services.anniversary_service import AnniversaryService
 from services.letter_service import LetterService
 from services.tree_service import TreeService
@@ -112,6 +114,27 @@ async def check_anniversaries(bot: Bot) -> None:
             )
 
 
+async def check_reason_reminders(bot: Bot) -> None:
+    """Фоновая задача: ежедневные напоминания о причинах каждую минуту."""
+    async with async_session_maker() as session:
+        reason_gift_repo = ReasonGiftRepository(session)
+        reason_repo = ReasonRepository(session)
+        couple_repo = CoupleRepository(session)
+        user_repo = UserRepository(session)
+
+        reminder_service = ReasonReminderService(
+            reason_gift_repo,
+            reason_repo,
+            couple_repo,
+            user_repo,
+            bot,
+        )
+        async with session.begin():
+            await reminder_service.check_and_notify(
+                datetime.now(timezone.utc)
+            )
+
+
 async def main() -> None:
     await check_db_connection()
 
@@ -138,6 +161,15 @@ async def main() -> None:
             minutes=1,
             kwargs={"bot": bot},
             id="check_anniversaries_job",
+            replace_existing=True,
+        )
+        
+        scheduler.add_job(
+            check_reason_reminders,
+            "interval",
+            minutes=1,
+            kwargs={"bot": bot},
+            id="check_reason_reminders_job",
             replace_existing=True,
         )
 

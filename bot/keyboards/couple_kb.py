@@ -6,6 +6,7 @@ from bot.callbacks.main import (
     LetterAction,
     MemoryAction,
     TreeAction,
+    ReasonAction,
 )
 
 
@@ -29,7 +30,6 @@ def get_couple_main_kb() -> InlineKeyboardMarkup:
             )
         ]
     ]
-
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
@@ -54,6 +54,16 @@ def get_couple_in_pair_kb() -> InlineKeyboardMarkup:
         ],
         [
             InlineKeyboardButton(
+                text="💌 100 причин",
+                callback_data=ReasonAction(action="author_menu").pack()
+            ),
+            InlineKeyboardButton(
+                text="💝 Причины для меня",
+                callback_data=ReasonAction(action="recipient_menu").pack()
+            )
+        ],
+        [
+            InlineKeyboardButton(
                 text="💔 Выйти из пары",
                 callback_data=CoupleAction(action="leave_confirm").pack()
             )
@@ -65,7 +75,6 @@ def get_couple_in_pair_kb() -> InlineKeyboardMarkup:
             )
         ]
     ]
-
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
@@ -83,7 +92,6 @@ def get_couple_confirm_leave_kb() -> InlineKeyboardMarkup:
             )
         ]
     ]
-
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
@@ -101,5 +109,4 @@ def get_couple_confirm_leave_final_kb() -> InlineKeyboardMarkup:
             )
         ]
     ]
-
     return InlineKeyboardMarkup(inline_keyboard=buttons)

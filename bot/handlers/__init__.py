@@ -8,6 +8,7 @@ from . import couple
 from . import letter
 from . import memory
 from . import tree
+from . import reason
 
 # Создаем главный роутер, который включает в себя все остальные
 router = Router()
@@ -20,3 +21,4 @@ router.include_router(couple.router)
 router.include_router(letter.router)
 router.include_router(memory.router)
 router.include_router(tree.router)
+router.include_router(reason.router)

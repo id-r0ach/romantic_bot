@@ -3,13 +3,15 @@ import string
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.exc import IntegrityError
+
 from aiogram import Bot
 from aiogram.exceptions import TelegramBadRequest
 
+from database.models.couple import Couple
 from database.repositories.couple import CoupleRepository
 from database.repositories.user import UserRepository
-from database.models.couple import Couple
 from services.letter_service import LetterService
+from services.reason_service import ReasonGiftService
 
 
 class CoupleService:
@@ -19,23 +21,26 @@ class CoupleService:
         letter_service: LetterService,
         user_repo: UserRepository,
         bot: Bot,
-    ):
+        reason_service: ReasonGiftService | None = None,
+    ) -> None:
         self.couple_repo = couple_repo
         self.letter_service = letter_service
         self.user_repo = user_repo
         self.bot = bot
+        self.reason_service = reason_service
 
     @staticmethod
     def _generate_invite_code() -> str:
         """Генерация 6-символьного кода без неоднозначных символов"""
-        alphabet = string.ascii_uppercase.replace("O", "").replace("I", "").replace("L", "")
+        alphabet = (
+            string.ascii_uppercase.replace("O", "").replace("I", "").replace("L", "")
+        )
         alphabet += string.digits.replace("0", "").replace("1", "")
         return "".join(secrets.choice(alphabet) for _ in range(6))
 
     async def create_couple(self, user_id: int) -> Couple:
         """Создать новую пару или обновить код в pending-паре"""
         existing = await self.couple_repo.get_by_user_id(user_id)
-
         if existing:
             raise ValueError("Ты уже в паре")
 
@@ -103,17 +108,24 @@ class CoupleService:
 
         # 1. Разрываем пару
         await self.couple_repo.break_couple(couple.id)
-        
-        # 2. Отменяем все активные письма (ВАЖНО!)
+
+        # 2. Отменяем все активные письма
         await self.letter_service.cancel_pending_letters(couple.id)
-        
-        # 3. Уведомляем партнера
-        partner_id = couple.user2_id if couple.user1_id == user_id else couple.user1_id
+
+        # 3. Отменяем все подарки: черновики и активные
+        if self.reason_service:
+            await self.reason_service.cancel_gifts_for_couple(couple.id)
+
+        # 4. Уведомляем партнера
+        partner_id = (
+            couple.user2_id if couple.user1_id == user_id else couple.user1_id
+        )
+
         if partner_id:
             try:
                 await self.bot.send_message(
                     chat_id=partner_id,
-                    text="💔 Твой партнер решил завершить отношения. Пара распалась."
+                    text="💔 Твой партнер решил завершить отношения. Пара распалась.",
                 )
             except TelegramBadRequest:
                 pass  # Партнер мог заблокировать бота
