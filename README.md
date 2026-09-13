@@ -1,176 +1,120 @@
 # Romantic Bot ❤️
 
-Telegram-бот, который помогает создавать настоящие эмоциональные события в отношениях.
+Telegram‑бот, который помогает создавать настоящие эмоциональные события в отношениях.
 
-Проект ориентирован не только на отправку красивых сообщений, а на создание совместных воспоминаний, укрепление отношений и помощь людям на разных этапах общения — от знакомства до долгих отношений.
-
----
-
-# Основные возможности
-
-Планируемые функции проекта:
-
-* 💌 красивые романтические страницы (Telegram Mini App);
-* 📖 история отношений;
-* 🌳 дерево отношений;
-* ❤️ «100 причин, почему я тебя люблю»;
-* ⏳ капсула времени;
-* 🎡 генератор идей для свиданий;
-* 🖼️ фотоистории и слайд-шоу;
-* 🤖 AI-функции.
-
----
-
-# Технологический стек
-
-## Backend
-
-* Python 3.12+
-* aiogram 3.x
-
-## База данных
-
-* PostgreSQL
-* SQLAlchemy 2 (Async ORM)
-* Alembic
-
-## Планируется
-
-* FastAPI
-* Telegram Mini App
-* Redis
-* AI-интеграции
-
----
-
-# Архитектура проекта
+## Структура проекта
 
 ```
 romantic_bot/
-│
-├── bot/                 # Telegram-специфичный код
-│
-├── database/            # Работа с базой данных
-│
-├── services/            # Бизнес-логика
-│
-├── config.py            # Конфигурация приложения
-│
-├── main.py              # Точка входа
-│
-└── requirements.txt
+├── alembic/                     # Конфигурация и миграции Alembic
+│   ├── env.py
+│   └── versions/
+│       ├── b8d93fa9849e_add_reason_gifts.py
+│       ├── bb0d4dc90537_fix_couple_foreign_key_to_telegram_id.py
+│       └── f96f0cc118cd_create_users_table.py
+├── bot/                         # Telegram‑специфичный код
+│   ├── callbacks/
+│   │   └── main.py
+│   ├── handlers/
+│   │   ├── couple.py
+│   │   ├── profile.py
+│   │   └── settings.py
+│   ├── keyboards/
+│   │   ├── common_kb.py
+│   │   ├── couple_kb.py
+│   │   ├── letter_delivery_kb.py
+│   │   ├── letter_kb.py
+│   │   ├── main_kb.py
+│   │   ├── memory_kb.py
+│   │   ├── reason_kb.py
+│   │   └── settings_kb.py
+│   ├── middlewares/
+│   │   └── db.py
+│   ├── states/
+│   │   ├── couple.py
+│   │   ├── letter.py
+│   │   ├── memory.py
+│   │   ├── reason.py
+│   │   └── settings.py
+│   └── utils/
+│       ├── navigation.py
+│       └── timezone_utils.py
+├── database/                    # Работа с базой данных
+│   ├── models/
+│   │   ├── base.py
+│   │   ├── couple.py
+│   │   ├── reason.py
+│   │   ├── tree.py
+│   │   └── user.py
+│   └── repositories/
+│       ├── base.py
+│       ├── couple.py
+│       ├── letter.py
+│       ├── memory.py
+│       ├── reason.py
+│       ├── tree.py
+│       └── user.py
+├── services/                    # Бизнес‑логика (не зависит от Telegram API)
+│   ├── anniversary_service.py
+│   ├── couple_service.py
+│   ├── letter_service.py
+│   ├── memory_service.py
+│   ├── reason_reminder_service.py
+│   ├── reason_service.py
+│   ├── tree_service.py
+│   └── user_service.py
+├── collect_project.py           # Скрипт для сбора проекта в один файл
+├── config.py                    # Конфигурация приложения (pydantic)
+├── main.py                      # Точка входа, планировщик задач
+├── requirements.txt             # Зависимости проекта
+├── docker-compose.yml           # Docker‑композиция
+└── .env.example                 # Шаблон переменных окружения
 ```
 
-### Назначение директорий
+## Технологический стек
 
-**bot/**
+- **Python** 3.12
+- **aiogram** 3.x – Telegram Bot API
+- **SQLAlchemy** 2 (async) – ORM
+- **PostgreSQL** – реляционная БД
+- **Redis** – кэш/сессии
+- **APScheduler** – планировщик фоновых задач
+- **Alembic** – миграции БД
 
-* handlers
-* keyboards
-* middlewares
-* filters
-
-Содержит только код, связанный с Telegram.
-
----
-
-**services/**
-
-Бизнес-логика приложения.
-
-Этот слой не должен зависеть от Telegram API, чтобы в будущем его можно было использовать из FastAPI, Mini App или других интерфейсов.
-
----
-
-**database/**
-
-Содержит:
-
-* модели SQLAlchemy;
-* миграции Alembic;
-* подключение к PostgreSQL;
-* работу с сессиями.
-
----
-
-# Установка
-
-## 1. Клонировать репозиторий
+## Установка и запуск
 
 ```bash
+# Клонируем репозиторий
 git clone https://github.com/your-username/romantic-bot.git
 cd romantic-bot
+
+# Создаём и заполняем переменные окружения
+cp .env.example .env
+# Внесите свои значения (см. ниже)
+
+# Запускаем контейнеры
+docker compose up -d --build
 ```
 
-## 2. Создать виртуальное окружение
+После запуска контейнеров бот автоматически подключится к Telegram и начнёт выполнять фоновые задачи.
 
-```bash
-python -m venv .venv
-```
+## Переменные окружения
 
-## 3. Активировать окружение
+| Переменная | Описание | Пример |
+|------------|----------|--------|
+| `BOT_TOKEN` | Токен Telegram‑бота от @BotFather | `123456789:AAF...` |
+| `POSTGRES_USER` | Пользователь PostgreSQL | `romantic_bot` |
+| `POSTGRES_PASSWORD` | Пароль пользователя | `REPLACE_WITH_STRONG_PASSWORD` |
+| `POSTGRES_DB` | Имя базы данных | `romantic_bot_db` |
+| `POSTGRES_HOST` | Хост PostgreSQL (внутри Docker‑сети) | `postgres` |
+| `POSTGRES_PORT` | Порт PostgreSQL | `5432` |
+| `REDIS_HOST` | Хост Redis (внутри Docker‑сети) | `redis` |
+| `REDIS_PORT` | Порт Redis | `6379` |
+| `REDIS_DB` | Номер базы Redis | `0` |
+| `DB_ECHO` | Логировать ли SQL‑запросы (True/False) | `false` |
 
-### Windows
+> **Важно:** Для локальной разработки необходимо задать собственный `BOT_TOKEN`. В `.env.example` он указан как `REPLACE_WITH_BOT_TOKEN`.
 
-```powershell
-.venv\Scripts\activate
-```
+## Лицензия
 
-### Linux / macOS
-
-```bash
-source .venv/bin/activate
-```
-
-## 4. Установить зависимости
-
-```bash
-pip install -r requirements.txt
-```
-
-## 5. Создать файл `.env`
-
-На основе `.env.example`.
-
-Пример:
-
-```env
-BOT_TOKEN=your_bot_token
-DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/romantic_bot_db
-```
-
-## 6. Запустить бота
-
-```bash
-python main.py
-```
-
----
-
-# Переменные окружения
-
-| Переменная   | Описание                     |
-| ------------ | ---------------------------- |
-| BOT_TOKEN    | Токен Telegram-бота          |
-| DATABASE_URL | URL подключения к PostgreSQL |
-
----
-
-# Принципы разработки
-
-Проект придерживается нескольких простых принципов:
-
-* разделение Telegram-кода и бизнес-логики;
-* современный стек Python;
-* постепенное развитие архитектуры без преждевременного усложнения;
-* чистый и читаемый код;
-* возможность масштабирования проекта без полной переработки структуры.
-
----
-
-# Статус проекта
-
-🚧 Проект находится в активной разработке.
-
-Тест интерактивного режима
-```
+MIT License.  
