@@ -3,6 +3,11 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
 
 # Виртуальное окружение
 venv/
@@ -11,19 +16,44 @@ env/
 
 # Переменные окружения (секреты!)
 .env
+.env.local
+.env.*.local
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
 # ОС
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # Логи
 *.log
+logs/
 
 # Alembic (миграции коммитим, но не временные файлы)
 migrations/versions/__pycache__/
+
+# Docker (если есть локальные override)
+docker-compose.override.yml
+
+# Aider
+.aider/
+.aider.conf.yml
+.aider.tags.cache.v3/
+
+# Тесты и покрытие
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Локальные настройки разработки
+*.local
