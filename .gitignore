@@ -46,6 +46,11 @@ docker-compose.override.yml
 .aider.conf.yml
 .aider.tags.cache.v3/
 
+# Aider history files
+.aider.chat.history.md
+.aider.input.history
+.aider.tags.cache.v4/
+
 # Тесты и покрытие
 .pytest_cache/
 .coverage
