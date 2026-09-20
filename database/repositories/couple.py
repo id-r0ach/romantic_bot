@@ -140,3 +140,4 @@ class CoupleRepository(BaseRepository[Couple]):
             .values(anniversary_time=new_time)
         )
         await self.session.execute(query)
+        await self.session.flush()

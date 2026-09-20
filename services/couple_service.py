@@ -106,7 +106,6 @@ class CoupleService:
         if not couple:
             raise ValueError("Ты не в паре")
         await self.couple_repo.update_anniversary_time(couple.id, new_time)
-        await self.couple_repo.session.commit()
 
     async def leave_couple(self, user_id: int) -> None:
         """Выйти из пары"""

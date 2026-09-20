@@ -54,7 +54,7 @@ def get_anniversary_time_keyboard() -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="📝 Своё время", callback_data=SettingsAction(action="set_time_custom").pack())
         ],
         [
-            InlineKeyboardButton(text="🔙 Назад", callback_data=NavAction(action="back").pack())
+            InlineKeyboardButton(text="🔙 Назад", callback_data=SettingsAction(action="back_to_settings").pack())
         ]
     ]
     return InlineKeyboardMarkup(inline_keyboard=keyboard)

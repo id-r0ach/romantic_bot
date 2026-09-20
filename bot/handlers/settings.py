@@ -10,11 +10,33 @@ from services.user_service import UserService
 from services.couple_service import CoupleService
 from bot.keyboards.settings_kb import get_settings_keyboard, get_timezone_keyboard, get_anniversary_time_keyboard
 from bot.keyboards.common_kb import get_cancel_fsm_kb
-from bot.keyboards.couple_kb import get_couple_start_kb
+from bot.keyboards.couple_kb import get_couple_main_kb
 from bot.callbacks.main import SettingsAction
 from bot.states.settings import SettingsStates
 
 router = Router()
+
+
+@router.callback_query(SettingsAction.filter(F.action == "back_to_settings"))
+async def back_to_settings(callback: CallbackQuery, user_service: UserService, couple_service: CoupleService) -> None:
+    user = await user_service.get_profile(telegram_id=callback.from_user.id)
+
+    if not user:
+        await callback.answer("❌ Профиль не найден", show_alert=True)
+        return
+
+    couple = await couple_service.get_couple(user_id=callback.from_user.id)
+    current_time = couple.anniversary_time.strftime("%H:%M") if couple and couple.anniversary_time else None
+
+    keyboard = get_settings_keyboard(user.notifications, user.timezone or "UTC", current_time)
+
+    text = (
+        f"⚙️ <b>Настройки</b>\n\n"
+        f"Здесь ты можешь управлять своими предпочтениями."
+    )
+
+    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=keyboard)
+    await callback.answer()
 
 
 @router.message(Command("settings"))
@@ -142,7 +164,7 @@ async def show_anniversary_time_menu(callback: CallbackQuery, couple_service: Co
     if not couple:
         await callback.message.edit_text(
             text="Сначала создай пару 💑",
-            reply_markup=get_couple_start_kb()
+            reply_markup=get_couple_main_kb()
         )
         await callback.answer()
         return
