@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, time, timezone
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -131,3 +131,12 @@ class CoupleRepository(BaseRepository[Couple]):
         query = select(Couple).where(Couple.status == "active")
         result = await self.session.execute(query)
         return list(result.scalars().all())
+
+    async def update_anniversary_time(self, couple_id: int, new_time: time) -> None:
+        """Обновить время напоминаний о годовщине."""
+        query = (
+            update(Couple)
+            .where(Couple.id == couple_id)
+            .values(anniversary_time=new_time)
+        )
+        await self.session.execute(query)
