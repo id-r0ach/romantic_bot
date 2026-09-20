@@ -1,4 +1,3 @@
-import re
 from datetime import time
 
 from aiogram import Router, F
@@ -31,8 +30,8 @@ async def back_to_settings(callback: CallbackQuery, user_service: UserService, c
     keyboard = get_settings_keyboard(user.notifications, user.timezone or "UTC", current_time)
 
     text = (
-        f"⚙️ <b>Настройки</b>\n\n"
-        f"Здесь ты можешь управлять своими предпочтениями."
+        "⚙️ <b>Настройки</b>\n\n"
+        "Здесь ты можешь управлять своими предпочтениями."
     )
 
     await callback.message.edit_text(text, parse_mode="HTML", reply_markup=keyboard)
@@ -53,8 +52,8 @@ async def cmd_settings(message: Message, user_service: UserService, couple_servi
     keyboard = get_settings_keyboard(user.notifications, user.timezone or "UTC", current_time)
     
     text = (
-        f"⚙️ <b>Настройки</b>\n\n"
-        f"Здесь ты можешь управлять своими предпочтениями."
+        "⚙️ <b>Настройки</b>\n\n"
+        "Здесь ты можешь управлять своими предпочтениями."
     )
 
     await message.answer(text, parse_mode="HTML", reply_markup=keyboard)

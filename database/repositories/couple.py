@@ -125,7 +125,6 @@ class CoupleRepository(BaseRepository[Couple]):
         await self.session.execute(query)
         await self.session.flush()
 
-
     async def get_active_couples(self) -> list[Couple]:
         """Возвращает все активные пары."""
         query = select(Couple).where(Couple.status == "active")
