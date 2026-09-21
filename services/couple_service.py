@@ -1,6 +1,6 @@
 import secrets
 import string
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, time, timedelta, timezone
 
 from sqlalchemy.exc import IntegrityError
 
@@ -99,6 +99,13 @@ class CoupleService:
     async def get_couple(self, user_id: int) -> Couple | None:
         """Получить активную пару пользователя"""
         return await self.couple_repo.get_by_user_id(user_id)
+
+    async def update_anniversary_time(self, user_id: int, new_time: time) -> None:
+        """Обновить время напоминаний о годовщинах."""
+        couple = await self.get_couple(user_id)
+        if not couple:
+            raise ValueError("Ты не в паре")
+        await self.couple_repo.update_anniversary_time(couple.id, new_time)
 
     async def leave_couple(self, user_id: int) -> None:
         """Выйти из пары"""

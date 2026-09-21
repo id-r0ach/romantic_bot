@@ -28,6 +28,13 @@ class SettingsAction(CallbackData, prefix="settings"):
         "set_timezone",
         "select_timezone",
         "other_timezone",
+        "back_to_settings",
+        "set_anniversary_time",
+        "set_time_08",
+        "set_time_09",
+        "set_time_10",
+        "set_time_11",
+        "set_time_custom",
     ]
     timezone: str | None = None
 
