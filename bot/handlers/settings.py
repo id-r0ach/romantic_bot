@@ -17,24 +17,18 @@ router = Router()
 
 
 @router.callback_query(SettingsAction.filter(F.action == "back_to_settings"))
-async def back_to_settings(callback: CallbackQuery, user_service: UserService, couple_service: CoupleService) -> None:
+async def cb_back_to_settings(callback: CallbackQuery, user_service: UserService, couple_service: CoupleService) -> None:
+    """Возврат в меню настроек из подменю."""
     user = await user_service.get_profile(telegram_id=callback.from_user.id)
-
-    if not user:
-        await callback.answer("❌ Профиль не найден", show_alert=True)
-        return
-
-    couple = await couple_service.get_couple(user_id=callback.from_user.id)
+    couple = await couple_service.get_couple(callback.from_user.id)
     current_time = couple.anniversary_time.strftime("%H:%M") if couple and couple.anniversary_time else None
-
     keyboard = get_settings_keyboard(user.notifications, user.timezone or "UTC", current_time)
 
-    text = (
-        "⚙️ <b>Настройки</b>\n\n"
-        "Здесь ты можешь управлять своими предпочтениями."
+    await callback.message.edit_text(
+        text="⚙️ <b>Настройки</b>\nЗдесь ты можешь управлять своими предпочтениями.",
+        parse_mode="HTML",
+        reply_markup=keyboard
     )
-
-    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=keyboard)
     await callback.answer()
 
 
@@ -158,7 +152,7 @@ async def process_custom_timezone(message: Message, state: FSMContext, user_serv
 
 
 @router.callback_query(SettingsAction.filter(F.action == "set_anniversary_time"))
-async def show_anniversary_time_menu(callback: CallbackQuery, couple_service: CoupleService) -> None:
+async def cb_set_anniversary_time(callback: CallbackQuery, couple_service: CoupleService) -> None:
     couple = await couple_service.get_couple(user_id=callback.from_user.id)
     if not couple:
         await callback.message.edit_text(
@@ -178,14 +172,20 @@ async def show_anniversary_time_menu(callback: CallbackQuery, couple_service: Co
 
 
 @router.callback_query(SettingsAction.filter(F.action.in_({"set_time_08", "set_time_09", "set_time_10", "set_time_11"})))
-async def select_preset_anniversary_time(callback: CallbackQuery, callback_data: SettingsAction, user_service: UserService, couple_service: CoupleService) -> None:
-    action_to_time = {
+async def cb_set_anniversary_time_preset(callback: CallbackQuery, user_service: UserService, couple_service: CoupleService) -> None:
+    action_data = SettingsAction.unpack(callback.data)
+    time_map = {
         "set_time_08": time(8, 0),
         "set_time_09": time(9, 0),
         "set_time_10": time(10, 0),
         "set_time_11": time(11, 0),
     }
-    new_time = action_to_time[callback_data.action]
+
+    if action_data.action not in time_map:
+        await callback.answer("❌ Ошибка выбора времени", show_alert=True)
+        return
+
+    new_time = time_map.get(action_data.action)
     try:
         await couple_service.update_anniversary_time(user_id=callback.from_user.id, new_time=new_time)
     except ValueError as e:
@@ -208,7 +208,7 @@ async def select_preset_anniversary_time(callback: CallbackQuery, callback_data:
 
 
 @router.callback_query(SettingsAction.filter(F.action == "set_time_custom"))
-async def ask_for_custom_time(callback: CallbackQuery, state: FSMContext) -> None:
+async def cb_set_anniversary_time_custom(callback: CallbackQuery, state: FSMContext) -> None:
     await callback.message.edit_text(
         text="✏️ Введи время в формате ЧЧ:ММ (например, 14:30):",
         reply_markup=get_cancel_fsm_kb(),
