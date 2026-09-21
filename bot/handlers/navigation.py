@@ -37,9 +37,10 @@ async def nav_couple(
 async def nav_settings(
     message: Message,
     user_service: UserService,
+    couple_service: CoupleService,
 ) -> None:
     """Навигация: показывает настройки."""
-    await cmd_settings(message, user_service)
+    await cmd_settings(message, user_service, couple_service)
 
 
 @router.callback_query(NavAction.filter(F.action == "back"))
